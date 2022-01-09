@@ -10,7 +10,7 @@ import (
 )
 
 type Handler struct {
-	DB storage.UrlStorer
+	DB storage.URLStorer
 }
 
 func trimFirstRune(s string) string {
@@ -22,27 +22,27 @@ func (h *Handler) RequestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		q := trimFirstRune(r.URL.Path)
 		fmt.Println(q)
-		longUrl, err := h.DB.GetUrl(q)
+		longURL, err := h.DB.GetURL(q)
 		if err != nil {
 			h.badRequestError(w)
 		}
-		w.Header().Set("Location", longUrl)
+		w.Header().Set("Location", longURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 
 		return
 	}
 
 	if r.Method == http.MethodPost {
-		longUrl, err := ioutil.ReadAll(r.Body)
+		longURL, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			h.badRequestError(w)
 		}
-		shortUrl, err := h.DB.SaveUrl(string(longUrl))
+		shortURL, err := h.DB.SaveURL(string(longURL))
 		if err != nil {
 			h.badRequestError(w)
 		}
 		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, "http://localhost:8080/"+shortUrl)
+		fmt.Fprint(w, "http://localhost:8080/"+shortURL)
 		return
 	}
 	http.Error(w, "Only GET and POST requests are allowed!", http.StatusBadRequest)

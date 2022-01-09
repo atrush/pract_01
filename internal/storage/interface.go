@@ -1,15 +1,15 @@
 package storage
 
-type UrlStorage struct {
-	UrlStorage UrlStorer
+type URLStorage struct {
+	URLStorage URLStorer
 }
-type UrlStorer interface {
-	GetUrl(shortUrl string) (string, error)
-	SaveUrl(srcUrl string) (string, error)
+type URLStorer interface {
+	GetURL(shortURL string) (string, error)
+	SaveURL(srcURL string) (string, error)
 }
 
-func NewUrlStorage(db UrlStorer) *UrlStorage {
-	return &UrlStorage{
-		UrlStorage: db,
+func NewURLStorage(db URLStorer) *URLStorage {
+	return &URLStorage{
+		URLStorage: db,
 	}
 }
