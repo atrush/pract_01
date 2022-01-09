@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/atrush/pract_01.git/internal/app"
+	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
@@ -49,7 +49,7 @@ func (mp *MapStorage) SaveURL(srcURL string) (string, error) {
 }
 
 func (mp *MapStorage) genShortURL(srcURL string, saltCount int) (string, error) {
-	shortURL := app.GenerateShortLink(srcURL, strconv.Itoa(saltCount))
+	shortURL := service.GenerateShortLink(srcURL, strconv.Itoa(saltCount))
 	_, ok := mp.urlMap[shortURL]
 	if ok {
 		saltCount++
