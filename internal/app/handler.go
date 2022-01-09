@@ -1,4 +1,4 @@
-package shortener
+package app
 
 import (
 	"fmt"
