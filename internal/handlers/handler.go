@@ -25,6 +25,11 @@ func (h *Handler) RequestHandler(w http.ResponseWriter, r *http.Request) {
 		longURL, err := h.DB.GetURL(q)
 		if err != nil {
 			h.badRequestError(w)
+			return
+		}
+		if longURL == "" {
+			h.notFoundError(w)
+			return
 		}
 		w.Header().Set("Location", longURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
@@ -49,5 +54,9 @@ func (h *Handler) RequestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) badRequestError(w http.ResponseWriter) {
-	http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusInternalServerError)
+	http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+}
+
+func (h *Handler) notFoundError(w http.ResponseWriter) {
+	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
