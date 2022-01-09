@@ -26,7 +26,7 @@ func NewStorage() *MapStorage {
 func (mp *MapStorage) GetURL(shortURL string) (string, error) {
 	if shortURL == "" {
 		return "", errors.New("короткая ссылка пустая")
-		//почему нельзя с заглавной бууквы????
+		//почему нельзя с заглавной буквы????
 	}
 	longURL, ok := mp.urlMap[shortURL]
 	if ok {
@@ -37,7 +37,6 @@ func (mp *MapStorage) GetURL(shortURL string) (string, error) {
 func (mp *MapStorage) SaveURL(srcURL string) (string, error) {
 	if srcURL == "" {
 		return "", errors.New("ссылка не может быть пустой")
-		//почему нельзя с заглавной буквы????
 	}
 	shortURL, err := mp.genShortURL(srcURL, len(mp.urlMap))
 	if err != nil {
