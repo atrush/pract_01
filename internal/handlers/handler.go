@@ -21,7 +21,6 @@ func trimFirstRune(s string) string {
 func (h *Handler) RequestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		q := trimFirstRune(r.URL.Path)
-		fmt.Println(q)
 		longURL, err := h.DB.GetURL(q)
 		if err != nil {
 			h.badRequestError(w)
