@@ -6,10 +6,13 @@ import (
 
 	"github.com/atrush/pract_01.git/internal/handlers"
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
 	handler := handlers.Handler{DB: storage.NewStorage()}
-	http.HandleFunc("/", handler.RequestHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	r := chi.NewRouter()
+	r.Get("/{shortURL}", handler.GetURLHandler)
+	r.Post("/", handler.SaveURLHandler)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

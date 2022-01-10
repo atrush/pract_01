@@ -12,60 +12,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandler_RequestHandler(t *testing.T) {
-	// определяем структуру теста
-	type want struct {
-		code         int
-		wantBody     bool
-		responseBody string
+func TestHandler_SaveURLHandler(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		body     string
+		wantCode int
+	}{
+		{
+			name:     "POST empty URL",
+			body:     "",
+			wantCode: 400,
+		},
+		{
+			name:     "POST URL",
+			body:     "https://practicum.yandex.ru/",
+			wantCode: 201,
+		},
 	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := Handler{DB: storage.NewStorage()}
+
+			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(tt.body)))
+
+			w := httptest.NewRecorder()
+			h := http.HandlerFunc(handler.SaveURLHandler)
+			h.ServeHTTP(w, request)
+			res := w.Result()
+			defer res.Body.Close()
+
+			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
+		})
+	}
+}
+
+func TestHandler_GetURLHandler(t *testing.T) {
 	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
-		method  string
-		name    string
-		request string
-		body    string
-		want    want
+		name     string
+		request  string
+		wantCode int
 	}{
-		// определяем все тесты
 		{
-			name:    "POST empty URL",
-			method:  http.MethodPost,
-			request: "/",
-			body:    "",
-			want: want{
-				code:     400,
-				wantBody: false,
-			},
+			name:     "GET not exist URL with short URL",
+			request:  "/aaaaaa",
+			wantCode: 404,
 		},
 		{
-			name:    "POST URL",
-			method:  http.MethodPost,
-			request: "/",
-			body:    "https://practicum.yandex.ru/",
-			want: want{
-				code:     201,
-				wantBody: false,
-			},
-		},
-		{
-			name:    "PUT URL",
-			method:  http.MethodPut,
-			request: "/",
-			body:    "https://practicum.yandex.ru/",
-			want: want{
-				code:     400,
-				wantBody: false,
-			},
-		},
-		{
-			name:    "GET not exist URL",
-			method:  http.MethodGet,
-			request: "/aaaaaa",
-			want: want{
-				code:     404,
-				wantBody: false,
-			},
+			name:     "GET not exist URL",
+			request:  "/aaaaaa/ddddd",
+			wantCode: 404,
 		},
 	}
 
@@ -74,42 +72,30 @@ func TestHandler_RequestHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := Handler{DB: storage.NewStorage()}
 
-			request := httptest.NewRequest(tt.method, tt.request, bytes.NewBuffer([]byte(tt.body)))
+			request := httptest.NewRequest(http.MethodGet, tt.request, nil)
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			// определяем хендлер
-			h := http.HandlerFunc(handler.RequestHandler)
+			h := http.HandlerFunc(handler.GetURLHandler)
 			// запускаем сервер
 			h.ServeHTTP(w, request)
 			res := w.Result()
 
 			// проверяем код ответа
-			assert.True(t, res.StatusCode == tt.want.code, "Ожидался код ответа %d, получен %d", tt.want.code, w.Code)
-
-			// получаем и проверяем тело запроса
-			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.False(t, tt.want.wantBody && (tt.want.responseBody != string(resBody)),
-				"Ожидалось тело ответа %d, получено %d", tt.want.wantBody, w.Body.String())
+			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
 		})
 	}
-
-	testSaveAndGetURL(t)
 }
 
-func testSaveAndGetURL(t *testing.T) {
+func Test_testSaveAndGetURL(t *testing.T) {
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
 
 	handler := Handler{DB: storage.NewStorage()}
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
 	w := httptest.NewRecorder()
-	h := http.HandlerFunc(handler.RequestHandler)
+	h := http.HandlerFunc(handler.SaveURLHandler)
 	h.ServeHTTP(w, request)
 
 	res := w.Result()
@@ -123,7 +109,7 @@ func testSaveAndGetURL(t *testing.T) {
 
 	request = httptest.NewRequest(http.MethodGet, shortURL, nil)
 	w = httptest.NewRecorder()
-	h = http.HandlerFunc(handler.RequestHandler)
+	h = http.HandlerFunc(handler.GetURLHandler)
 	h.ServeHTTP(w, request)
 
 	res = w.Result()

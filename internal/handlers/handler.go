@@ -18,38 +18,35 @@ func trimFirstRune(s string) string {
 	return s[i:]
 }
 
-func (h *Handler) RequestHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		q := trimFirstRune(r.URL.Path)
-		longURL, err := h.DB.GetURL(q)
-		if err != nil {
-			h.badRequestError(w)
-			return
-		}
-		if longURL == "" {
-			h.notFoundError(w)
-			return
-		}
-		w.Header().Set("Location", longURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
+func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
+	longURL, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		h.badRequestError(w)
+	}
+	shortURL, err := h.DB.SaveURL(string(longURL))
+	if err != nil {
+		h.badRequestError(w)
+	}
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprint(w, "http://localhost:8080/"+shortURL)
+}
 
+func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
+	q := trimFirstRune(r.URL.Path)
+	longURL, err := h.DB.GetURL(q)
+	if err != nil {
+		h.badRequestError(w)
 		return
 	}
-
-	if r.Method == http.MethodPost {
-		longURL, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			h.badRequestError(w)
-		}
-		shortURL, err := h.DB.SaveURL(string(longURL))
-		if err != nil {
-			h.badRequestError(w)
-		}
-		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, "http://localhost:8080/"+shortURL)
+	if longURL == "" {
+		h.notFoundError(w)
 		return
 	}
-	http.Error(w, "Only GET and POST requests are allowed!", http.StatusBadRequest)
+	w.Header().Set("Location", longURL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+func (h *Handler) BadRequestHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Разрешены только GET и POST запросы", http.StatusBadRequest)
 }
 
 func (h *Handler) badRequestError(w http.ResponseWriter) {
