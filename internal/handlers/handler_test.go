@@ -81,6 +81,7 @@ func TestHandler_GetURLHandler(t *testing.T) {
 			// запускаем сервер
 			h.ServeHTTP(w, request)
 			res := w.Result()
+			defer res.Body.Close()
 
 			// проверяем код ответа
 			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
@@ -99,8 +100,8 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	h.ServeHTTP(w, request)
 
 	res := w.Result()
-
 	defer res.Body.Close()
+
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
