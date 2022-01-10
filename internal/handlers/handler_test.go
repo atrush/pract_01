@@ -99,10 +99,10 @@ func TestHandler_RequestHandler(t *testing.T) {
 		})
 	}
 
-	testSaveAndGetUrl(t)
+	testSaveAndGetURL(t)
 }
 
-func testSaveAndGetUrl(t *testing.T) {
+func testSaveAndGetURL(t *testing.T) {
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
 
@@ -119,14 +119,16 @@ func testSaveAndGetUrl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	shortUrl := string(resBody)
+	shortURL := string(resBody)
 
-	request = httptest.NewRequest(http.MethodGet, shortUrl, nil)
+	request = httptest.NewRequest(http.MethodGet, shortURL, nil)
 	w = httptest.NewRecorder()
 	h = http.HandlerFunc(handler.RequestHandler)
 	h.ServeHTTP(w, request)
 
 	res = w.Result()
+	defer res.Body.Close()
+
 	assert.True(t, res.StatusCode == 307, "При получении ссылки ожидался код ответа %d, получен %d", 307, w.Code)
 
 	headLocationVal, ok := res.Header[longURLHeader]
