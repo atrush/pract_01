@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"unicode/utf8"
 
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -34,7 +34,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 		h.badRequestError(w)
 	}
 
-	shortID, err := h.genShortURL(string(srcURL), 0, 0)
+	shortID, err := h.genShortURL(string(srcURL), 0, "")
 	if err != nil {
 		h.badRequestError(w)
 
@@ -52,13 +52,14 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "http://localhost:8080/"+shortID)
 }
 
-func (h *Handler) genShortURL(srcURL string, saltCount int, iterationCount int) (string, error) {
-	shortID := service.GenerateShortLink(srcURL, strconv.Itoa(saltCount))
+func (h *Handler) genShortURL(srcURL string, iterationCount int, salt string) (string, error) {
+	shortID := service.GenerateShortLink(srcURL, salt)
 
 	if !h.db.IsAvailableID(shortID) {
-		saltCount++
 		iterationCount++
-		shortID, err := h.genShortURL(srcURL, saltCount, iterationCount)
+		salt := uuid.New().String()
+		var err error
+		shortID, err = h.genShortURL(srcURL, iterationCount, salt)
 		if err != nil || iterationCount > 10 {
 
 			return "", errors.New("ошибка генерации короткой ссылки")
