@@ -2,9 +2,7 @@ package inmemory
 
 import (
 	"errors"
-	"strconv"
 
-	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
@@ -24,39 +22,30 @@ func NewStorage() *MapStorage {
 	}
 }
 
-func (mp *MapStorage) GetURL(shortURL string) (string, error) {
-	if shortURL == "" {
-		return "", errors.New("короткая ссылка пустая")
-		//почему нельзя с заглавной буквы????
+func (mp *MapStorage) GetURL(shortID string) (string, error) {
+	if shortID == "" {
+		return "", errors.New("нельзя использовать пустой id")
 	}
-	longURL, ok := mp.urlMap[shortURL]
+	longURL, ok := mp.urlMap[shortID]
 	if ok {
 		return longURL, nil
 	}
 	return "", nil
 }
-func (mp *MapStorage) SaveURL(srcURL string) (string, error) {
+func (mp *MapStorage) SaveURL(shortID string, srcURL string) (string, error) {
+	if shortID == "" {
+		return "", errors.New("нельзя использовать пустой id")
+	}
 	if srcURL == "" {
-		return "", errors.New("ссылка не может быть пустой")
+		return "", errors.New("нельзя сохранить пустое значение")
 	}
-	shortURL, err := mp.genShortURL(srcURL, len(mp.urlMap))
-	if err != nil {
-		return "", err
+	if !mp.IsAvailableID(shortID) {
+		return "", errors.New("id уже существует")
 	}
-	mp.urlMap[shortURL] = srcURL
-	return shortURL, nil
+	mp.urlMap[shortID] = srcURL
+	return shortID, nil
 }
-
-func (mp *MapStorage) genShortURL(srcURL string, saltCount int) (string, error) {
-	shortURL := service.GenerateShortLink(srcURL, strconv.Itoa(saltCount))
-	_, ok := mp.urlMap[shortURL]
-	if ok {
-		saltCount++
-		shortURL, err := mp.genShortURL(srcURL, saltCount)
-		if err != nil || (saltCount-len(mp.urlMap) > 10) {
-			return "", errors.New("ошибка генерации короткой ссылки")
-		}
-		return shortURL, nil
-	}
-	return shortURL, nil
+func (mp *MapStorage) IsAvailableID(shortID string) bool {
+	_, ok := mp.urlMap[shortID]
+	return !ok
 }
