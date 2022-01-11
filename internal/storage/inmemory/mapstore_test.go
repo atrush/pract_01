@@ -66,7 +66,8 @@ func TestMapStorage_GetURL(t *testing.T) {
 
 func TestMapStorage_SaveURL(t *testing.T) {
 	type args struct {
-		srcURL string
+		shortID string
+		srcURL  string
 	}
 	tests := []struct {
 		name    string
@@ -81,7 +82,7 @@ func TestMapStorage_SaveURL(t *testing.T) {
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
 			},
-			args:    args{srcURL: ""},
+			args:    args{srcURL: "", shortID: ""},
 			wantErr: true,
 		},
 		{
@@ -91,13 +92,13 @@ func TestMapStorage_SaveURL(t *testing.T) {
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
 			},
-			args:    args{srcURL: "https://github.com/"},
+			args:    args{srcURL: "https://github.com/", shortID: "dsdsdds"},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.mp.SaveURL(tt.args.srcURL)
+			got, err := tt.mp.SaveURL(tt.args.shortID, tt.args.srcURL)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				assert.Contains(t, tt.mp.urlMap, got)
