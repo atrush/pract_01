@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"bytes"
@@ -33,7 +33,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Handler{DB: mapstorage.NewStorage()}
+			handler := Handler{db: mapstorage.NewStorage()}
 
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(tt.body)))
 
@@ -70,7 +70,7 @@ func TestHandler_GetURLHandler(t *testing.T) {
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			handler := Handler{DB: mapstorage.NewStorage()}
+			handler := Handler{db: mapstorage.NewStorage()}
 
 			request := httptest.NewRequest(http.MethodGet, tt.request, nil)
 
@@ -93,7 +93,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
 
-	handler := Handler{DB: mapstorage.NewStorage()}
+	handler := Handler{db: mapstorage.NewStorage()}
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
 	w := httptest.NewRecorder()
 	h := http.HandlerFunc(handler.SaveURLHandler)

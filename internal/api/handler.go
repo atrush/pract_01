@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"fmt"
@@ -10,7 +10,13 @@ import (
 )
 
 type Handler struct {
-	DB storage.URLStorer
+	db storage.URLStorer
+}
+
+func NewHandler(db storage.URLStorer) *Handler {
+	return &Handler{
+		db: db,
+	}
 }
 
 func trimFirstRune(s string) string {
@@ -23,7 +29,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.badRequestError(w)
 	}
-	shortURL, err := h.DB.SaveURL(string(longURL))
+	shortURL, err := h.db.SaveURL(string(longURL))
 	if err != nil {
 		h.badRequestError(w)
 	}
@@ -33,7 +39,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	q := trimFirstRune(r.URL.Path)
-	longURL, err := h.DB.GetURL(q)
+	longURL, err := h.db.GetURL(q)
 	if err != nil {
 		h.badRequestError(w)
 		return
