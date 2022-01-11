@@ -98,10 +98,6 @@ func (h *Handler) genShortURL(srcURL string, iterationCount int, salt string) (s
 	return shortID, nil
 }
 
-func (h *Handler) BadRequestHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Разрешены только GET и POST запросы", http.StatusBadRequest)
-}
-
 func (h *Handler) badRequestError(w http.ResponseWriter, errText string) {
 	http.Error(w, errText, http.StatusBadRequest)
 }
