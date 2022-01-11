@@ -16,10 +16,9 @@ type MapStorage struct {
 }
 
 func NewStorage() *MapStorage {
-	initURLMap := make(map[string]string)
 
 	return &MapStorage{
-		urlMap: initURLMap,
+		urlMap: make(map[string]string),
 	}
 }
 
