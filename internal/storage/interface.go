@@ -1,6 +1,7 @@
 package storage
 
 type URLStorer interface {
-	GetURL(shortURL string) (string, error)
-	SaveURL(srcURL string) (string, error)
+	GetURL(shortID string) (string, error)
+	SaveURL(shortID string, srcURL string) (string, error)
+	IsAvailableID(shortID string) bool
 }

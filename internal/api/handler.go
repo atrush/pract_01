@@ -1,11 +1,14 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"unicode/utf8"
 
+	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
@@ -21,20 +24,50 @@ func NewHandler(db storage.URLStorer) *Handler {
 
 func trimFirstRune(s string) string {
 	_, i := utf8.DecodeRuneInString(s)
+
 	return s[i:]
 }
 
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
-	longURL, err := ioutil.ReadAll(r.Body)
+	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		h.badRequestError(w)
 	}
-	shortURL, err := h.db.SaveURL(string(longURL))
+
+	shortID, err := h.genShortURL(string(srcURL), 0, 0)
 	if err != nil {
 		h.badRequestError(w)
+
+		return
 	}
+
+	_, err = h.db.SaveURL(shortID, string(srcURL))
+	if err != nil {
+		h.badRequestError(w)
+
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprint(w, "http://localhost:8080/"+shortURL)
+	fmt.Fprint(w, "http://localhost:8080/"+shortID)
+}
+
+func (h *Handler) genShortURL(srcURL string, saltCount int, iterationCount int) (string, error) {
+	shortID := service.GenerateShortLink(srcURL, strconv.Itoa(saltCount))
+
+	if !h.db.IsAvailableID(shortID) {
+		saltCount++
+		iterationCount++
+		shortID, err := h.genShortURL(srcURL, saltCount, iterationCount)
+		if err != nil || iterationCount > 10 {
+
+			return "", errors.New("ошибка генерации короткой ссылки")
+		}
+
+		return shortID, nil
+	}
+
+	return shortID, nil
 }
 
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,10 +75,12 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	longURL, err := h.db.GetURL(q)
 	if err != nil {
 		h.badRequestError(w)
+
 		return
 	}
 	if longURL == "" {
 		h.notFoundError(w)
+
 		return
 	}
 	w.Header().Set("Location", longURL)
