@@ -22,6 +22,7 @@ func NewHandler(db storage.URLStorer) *Handler {
 }
 
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		h.badRequestError(w, err.Error())
