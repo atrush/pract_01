@@ -1,13 +1,14 @@
-package storage
+package mapstorage
 
 import (
 	"errors"
 	"strconv"
 
 	"github.com/atrush/pract_01.git/internal/service"
+	"github.com/atrush/pract_01.git/internal/storage"
 )
 
-var _ URLStorer = (*MapStorage)(nil)
+var _ storage.URLStorer = (*MapStorage)(nil)
 
 //в чем разница с  = Mapstorage{} ???
 // Storage keeps storage repository dependencies.
