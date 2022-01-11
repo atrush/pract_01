@@ -1,4 +1,4 @@
-package mapstorage
+package inmemory
 
 import (
 	"testing"
