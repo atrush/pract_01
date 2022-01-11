@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"unicode/utf8"
@@ -32,15 +31,15 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		h.badRequestError(w)
-	}
 
+		return
+	}
 	shortID, err := h.genShortURL(string(srcURL), 0, "")
 	if err != nil {
 		h.badRequestError(w)
 
 		return
 	}
-
 	_, err = h.db.SaveURL(shortID, string(srcURL))
 	if err != nil {
 		h.badRequestError(w)
@@ -49,7 +48,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprint(w, "http://localhost:8080/"+shortID)
+	w.Write([]byte("http://localhost:8080/" + shortID))
 }
 
 func (h *Handler) genShortURL(srcURL string, iterationCount int, salt string) (string, error) {
@@ -57,7 +56,9 @@ func (h *Handler) genShortURL(srcURL string, iterationCount int, salt string) (s
 
 	if !h.db.IsAvailableID(shortID) {
 		iterationCount++
+
 		salt := uuid.New().String()
+
 		var err error
 		shortID, err = h.genShortURL(srcURL, iterationCount, salt)
 		if err != nil || iterationCount > 10 {
