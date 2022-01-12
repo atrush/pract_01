@@ -12,13 +12,14 @@ var _ storage.URLStorer = (*MapStorage)(nil)
 
 type MapStorage struct {
 	urlMap map[string]string
-	mutex  sync.Mutex
+	mutex  *sync.Mutex
 }
 
 func NewStorage() *MapStorage {
-
+	mu := new(sync.Mutex)
 	return &MapStorage{
 		urlMap: make(map[string]string),
+		mutex:  mu,
 	}
 }
 
