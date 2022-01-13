@@ -28,6 +28,7 @@ func (sh *Shortener) GetURL(shortID string) (string, error) {
 
 		return "", err
 	}
+
 	return longURL, nil
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
-//в чем разница с  = Mapstorage{} ???
 var _ storage.URLStorer = (*MapStorage)(nil)
 
 type MapStorage struct {
@@ -17,6 +16,7 @@ type MapStorage struct {
 
 func NewStorage() *MapStorage {
 	mu := new(sync.Mutex)
+
 	return &MapStorage{
 		urlMap: make(map[string]string),
 		mutex:  mu,

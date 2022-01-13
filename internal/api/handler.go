@@ -13,6 +13,7 @@ type Handler struct {
 }
 
 func NewHandler(svc *service.Shortener) *Handler {
+
 	return &Handler{
 		svc: svc,
 	}
