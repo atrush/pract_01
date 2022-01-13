@@ -62,6 +62,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 			if !tt.wantErr {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+
 				return
 			}
 			assert.Error(t, err)
@@ -111,6 +112,7 @@ func TestMapStorage_SaveURL(t *testing.T) {
 				require.NoError(t, err)
 				assert.Contains(t, tt.mp.urlMap, got)
 				assert.Equal(t, tt.mp.urlMap[got], tt.args.srcURL)
+
 				return
 			}
 			assert.Error(t, err)
