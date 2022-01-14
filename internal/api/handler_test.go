@@ -36,7 +36,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := storage.NewRepository(inmemory.NewStorage())
-			svc, _ := service.NewShotener(repo)
+			svc, _ := service.NewShortener(repo)
 			//require.NoError(t, err, err.Error())
 
 			handler := Handler{svc: svc}
@@ -77,7 +77,7 @@ func TestHandler_GetURLHandler(t *testing.T) {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
 			repo := storage.NewRepository(inmemory.NewStorage())
-			svc, _ := service.NewShotener(repo)
+			svc, _ := service.NewShortener(repo)
 			//require.NoError(t, err, err.Error())
 			handler := Handler{svc: svc}
 
@@ -103,7 +103,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	longURLHeader := "Location"
 
 	repo := storage.NewRepository(inmemory.NewStorage())
-	svc, _ := service.NewShotener(repo)
+	svc, _ := service.NewShortener(repo)
 	//require.NoError(t, err, err.Error())
 	handler := Handler{svc: svc}
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))

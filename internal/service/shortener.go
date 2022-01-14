@@ -12,7 +12,7 @@ type Shortener struct {
 	repository *storage.Repository
 }
 
-func NewShotener(repository *storage.Repository) (*Shortener, error) {
+func NewShortener(repository *storage.Repository) (*Shortener, error) {
 	if repository == nil || repository.URLStorer == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}

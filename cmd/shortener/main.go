@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	reposytory := storage.NewRepository(inmemory.NewStorage())
-	svc, err := service.NewShotener(reposytory)
+	repository := storage.NewRepository(inmemory.NewStorage())
+	svc, err := service.NewShortener(repository)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
