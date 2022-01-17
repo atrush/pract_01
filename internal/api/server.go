@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 )
 
@@ -25,5 +26,8 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	if err := s.httpServer.ListenAndServe(); err == http.ErrServerClosed {
+		return errors.New("http server not runned")
+	}
 	return s.httpServer.Shutdown(ctx)
 }
