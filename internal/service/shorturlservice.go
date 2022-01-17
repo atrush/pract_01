@@ -3,9 +3,8 @@ package service
 import (
 	"errors"
 
-	"github.com/google/uuid"
-
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
 )
 
 type ShortURLService struct {
@@ -25,7 +24,6 @@ func NewShortURLService(db storage.URLStorer) (*ShortURLService, error) {
 func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 	longURL, err := sh.db.GetURL(shortID)
 	if err != nil {
-
 		return "", err
 	}
 
@@ -35,13 +33,11 @@ func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 func (sh *ShortURLService) SaveURL(srcURL string) (string, error) {
 	shortID, err := sh.genShortURL(string(srcURL))
 	if err != nil {
-
 		return "", err
 	}
 
 	_, err = sh.db.SaveURL(shortID, string(srcURL))
 	if err != nil {
-
 		return "", err
 	}
 
@@ -51,7 +47,6 @@ func (sh *ShortURLService) SaveURL(srcURL string) (string, error) {
 func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
 	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, "")
 	if err != nil {
-
 		return "", err
 	}
 
@@ -64,10 +59,8 @@ func (sh *ShortURLService) iterShortURLGenerator(srcURL string, iterationCount i
 		iterationCount++
 		salt := uuid.New().String()
 
-		var err error
-		shortID, err = sh.iterShortURLGenerator(srcURL, iterationCount, salt)
+		shortID, err := sh.iterShortURLGenerator(srcURL, iterationCount, salt)
 		if err != nil || iterationCount > 10 {
-
 			return "", errors.New("ошибка генерации короткой ссылки")
 		}
 
