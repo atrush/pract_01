@@ -44,6 +44,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			r.ServeHTTP(w, request)
 
 			res := w.Result()
+			defer res.Body.Close()
 			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
 		})
 	}
@@ -80,6 +81,7 @@ func TestHandler_GetURLHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, request)
 			res := w.Result()
+			defer res.Body.Close()
 
 			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
 		})
@@ -105,7 +107,6 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer res.Body.Close()
 
 	shortURL := string(resBody)
 
@@ -113,6 +114,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 	res = w.Result()
+	defer res.Body.Close()
 
 	assert.True(t, res.StatusCode == 307, "При получении ссылки ожидался код ответа %d, получен %d", 307, w.Code)
 
