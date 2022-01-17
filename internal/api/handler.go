@@ -20,24 +20,21 @@ func NewHandler(svc service.URLShortener) *Handler {
 }
 
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		h.badRequestError(w, err.Error())
-
 		return
 	}
+	defer r.Body.Close()
 
 	if string(srcURL) == "" {
 		h.badRequestError(w, "нельзя сохранить пустую ссылку")
-
 		return
 	}
 
 	shortID, err := h.svc.SaveURL(string(srcURL))
 	if err != nil {
 		h.badRequestError(w, err.Error())
-
 		return
 	}
 
@@ -49,20 +46,17 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	shortID := trimFirstRune(r.URL.Path)
 	if shortID == "" {
 		h.badRequestError(w, "короткая ссылка не может быть пустой")
-
 		return
 	}
 
 	longURL, err := h.svc.GetURL(shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
-
 		return
 	}
 
 	if longURL == "" {
 		h.notFoundError(w)
-
 		return
 	}
 
@@ -80,6 +74,5 @@ func (h *Handler) notFoundError(w http.ResponseWriter) {
 
 func trimFirstRune(s string) string {
 	_, i := utf8.DecodeRuneInString(s)
-
 	return s[i:]
 }
