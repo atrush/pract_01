@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/atrush/pract_01.git/internal/storage/inmemory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,8 +34,8 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := storage.NewRepository(inmemory.NewStorage())
-			svc, _ := service.NewShortener(repo)
+			db := inmemory.NewStorage()
+			svc, _ := service.NewShortener(db)
 			//require.NoError(t, err, err.Error())
 
 			handler := Handler{svc: svc}
@@ -76,8 +75,8 @@ func TestHandler_GetURLHandler(t *testing.T) {
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			repo := storage.NewRepository(inmemory.NewStorage())
-			svc, _ := service.NewShortener(repo)
+			db := inmemory.NewStorage()
+			svc, _ := service.NewShortener(db)
 			//require.NoError(t, err, err.Error())
 			handler := Handler{svc: svc}
 
@@ -102,8 +101,8 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
 
-	repo := storage.NewRepository(inmemory.NewStorage())
-	svc, _ := service.NewShortener(repo)
+	db := inmemory.NewStorage()
+	svc, _ := service.NewShortener(db)
 	//require.NoError(t, err, err.Error())
 	handler := Handler{svc: svc}
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))

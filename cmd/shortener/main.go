@@ -8,13 +8,12 @@ import (
 
 	"github.com/atrush/pract_01.git/internal/api"
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/atrush/pract_01.git/internal/storage/inmemory"
 )
 
 func main() {
-	repository := storage.NewRepository(inmemory.NewStorage())
-	svc, err := service.NewShortener(repository)
+	db := inmemory.NewStorage()
+	svc, err := service.NewShortener(db)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

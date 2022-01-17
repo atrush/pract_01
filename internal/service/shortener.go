@@ -9,21 +9,21 @@ import (
 )
 
 type Shortener struct {
-	repository *storage.Repository
+	db storage.URLStorer
 }
 
-func NewShortener(repository *storage.Repository) (*Shortener, error) {
-	if repository == nil || repository.URLStorer == nil {
+func NewShortener(db storage.URLStorer) (*Shortener, error) {
+	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}
 
 	return &Shortener{
-		repository: repository,
+		db: db,
 	}, nil
 }
 
 func (sh *Shortener) GetURL(shortID string) (string, error) {
-	longURL, err := sh.repository.GetURL(shortID)
+	longURL, err := sh.db.GetURL(shortID)
 	if err != nil {
 
 		return "", err
@@ -39,7 +39,7 @@ func (sh *Shortener) SaveURL(srcURL string) (string, error) {
 		return "", err
 	}
 
-	_, err = sh.repository.SaveURL(shortID, string(srcURL))
+	_, err = sh.db.SaveURL(shortID, string(srcURL))
 	if err != nil {
 
 		return "", err
@@ -60,7 +60,7 @@ func (sh *Shortener) genShortURL(srcURL string) (string, error) {
 
 func (sh *Shortener) iterShortURLGenerator(srcURL string, iterationCount int, salt string) (string, error) {
 	shortID := GenerateShortLink(srcURL, salt)
-	if !sh.repository.IsAvailableID(shortID) {
+	if !sh.db.IsAvailableID(shortID) {
 		iterationCount++
 		salt := uuid.New().String()
 
