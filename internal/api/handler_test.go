@@ -102,7 +102,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	r.ServeHTTP(w, request)
 
 	res := w.Result()
-
+	defer res.Body.Close()
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
