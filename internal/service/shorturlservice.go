@@ -8,21 +8,21 @@ import (
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
-type Shortener struct {
+type ShortURLService struct {
 	db storage.URLStorer
 }
 
-func NewShortener(db storage.URLStorer) (*Shortener, error) {
+func NewShortURLService(db storage.URLStorer) (*ShortURLService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}
 
-	return &Shortener{
+	return &ShortURLService{
 		db: db,
 	}, nil
 }
 
-func (sh *Shortener) GetURL(shortID string) (string, error) {
+func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 	longURL, err := sh.db.GetURL(shortID)
 	if err != nil {
 
@@ -32,7 +32,7 @@ func (sh *Shortener) GetURL(shortID string) (string, error) {
 	return longURL, nil
 }
 
-func (sh *Shortener) SaveURL(srcURL string) (string, error) {
+func (sh *ShortURLService) SaveURL(srcURL string) (string, error) {
 	shortID, err := sh.genShortURL(string(srcURL))
 	if err != nil {
 
@@ -48,7 +48,7 @@ func (sh *Shortener) SaveURL(srcURL string) (string, error) {
 	return shortID, nil
 }
 
-func (sh *Shortener) genShortURL(srcURL string) (string, error) {
+func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
 	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, "")
 	if err != nil {
 
@@ -58,7 +58,7 @@ func (sh *Shortener) genShortURL(srcURL string) (string, error) {
 	return shortID, nil
 }
 
-func (sh *Shortener) iterShortURLGenerator(srcURL string, iterationCount int, salt string) (string, error) {
+func (sh *ShortURLService) iterShortURLGenerator(srcURL string, iterationCount int, salt string) (string, error) {
 	shortID := GenerateShortLink(srcURL, salt)
 	if !sh.db.IsAvailableID(shortID) {
 		iterationCount++

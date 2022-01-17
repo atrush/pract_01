@@ -9,10 +9,10 @@ import (
 )
 
 type Handler struct {
-	svc *service.Shortener
+	svc service.URLShortener
 }
 
-func NewHandler(svc *service.Shortener) *Handler {
+func NewHandler(svc service.URLShortener) *Handler {
 
 	return &Handler{
 		svc: svc,

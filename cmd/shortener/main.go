@@ -13,7 +13,7 @@ import (
 
 func main() {
 	db := inmemory.NewStorage()
-	svc, err := service.NewShortener(db)
+	svc, err := service.NewShortURLService(db)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
