@@ -13,7 +13,7 @@ type Server struct {
 
 func NewServer(port string, handler Handler) *Server {
 	r := chi.NewRouter()
-	r.Get("/*", handler.GetURLHandler)
+	r.Get("/{shortID}", handler.GetURLHandler)
 	r.Post("/", handler.SaveURLHandler)
 
 	return &Server{

@@ -3,9 +3,9 @@ package api
 import (
 	"io/ioutil"
 	"net/http"
-	"unicode/utf8"
 
 	"github.com/atrush/pract_01.git/internal/service"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -43,7 +43,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
-	shortID := trimFirstRune(r.URL.Path)
+	shortID := chi.URLParam(r, "shortID")
 	if shortID == "" {
 		h.badRequestError(w, "короткая ссылка не может быть пустой")
 		return
@@ -70,9 +70,4 @@ func (h *Handler) badRequestError(w http.ResponseWriter, errText string) {
 
 func (h *Handler) notFoundError(w http.ResponseWriter) {
 	http.Error(w, "запрашиваемая страница не найдена", http.StatusNotFound)
-}
-
-func trimFirstRune(s string) string {
-	_, i := utf8.DecodeRuneInString(s)
-	return s[i:]
 }
