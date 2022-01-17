@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,6 +25,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
+				mutex: &sync.RWMutex{},
 			},
 			args:    args{shortURL: ""},
 			wantErr: true,
@@ -34,6 +36,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
+				mutex: &sync.RWMutex{},
 			},
 			args:    args{shortURL: "dqwdwqd"},
 			want:    "https://practicum.yandex.ru/",
@@ -45,6 +48,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
+				mutex: &sync.RWMutex{},
 			},
 			args:    args{shortURL: "111111"},
 			want:    "",
@@ -82,6 +86,7 @@ func TestMapStorage_SaveURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
+				mutex: &sync.RWMutex{},
 			},
 			args:    args{srcURL: "", shortID: ""},
 			wantErr: true,
@@ -92,6 +97,7 @@ func TestMapStorage_SaveURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
+				mutex: &sync.RWMutex{},
 			},
 			args:    args{srcURL: "https://github.com/", shortID: "dsdsdds"},
 			wantErr: false,
