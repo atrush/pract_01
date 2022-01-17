@@ -11,27 +11,23 @@ var _ storage.URLStorer = (*MapStorage)(nil)
 
 type MapStorage struct {
 	urlMap map[string]string
-	mutex  *sync.Mutex
+	mutex  sync.Mutex
 }
 
 func NewStorage() *MapStorage {
-	mu := new(sync.Mutex)
 
 	return &MapStorage{
 		urlMap: make(map[string]string),
-		mutex:  mu,
 	}
 }
 
 func (mp *MapStorage) GetURL(shortID string) (string, error) {
 	if shortID == "" {
-
 		return "", errors.New("нельзя использовать пустой id")
 	}
 
 	longURL, ok := mp.urlMap[shortID]
 	if ok {
-
 		return longURL, nil
 	}
 
@@ -39,16 +35,12 @@ func (mp *MapStorage) GetURL(shortID string) (string, error) {
 }
 func (mp *MapStorage) SaveURL(shortID string, srcURL string) (string, error) {
 	if shortID == "" {
-
 		return "", errors.New("нельзя использовать пустой id")
 	}
 	if srcURL == "" {
-
 		return "", errors.New("нельзя сохранить пустое значение")
 	}
-
 	if !mp.IsAvailableID(shortID) {
-
 		return "", errors.New("id уже существует")
 	}
 

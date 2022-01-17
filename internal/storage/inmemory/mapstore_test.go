@@ -3,8 +3,6 @@ package inmemory
 import (
 	"testing"
 
-	"sync"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +11,6 @@ func TestMapStorage_GetURL(t *testing.T) {
 	type args struct {
 		shortURL string
 	}
-	mu := new(sync.Mutex)
 	tests := []struct {
 		name    string
 		mp      MapStorage
@@ -27,7 +24,6 @@ func TestMapStorage_GetURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
-				mutex: mu,
 			},
 			args:    args{shortURL: ""},
 			wantErr: true,
@@ -38,7 +34,6 @@ func TestMapStorage_GetURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
-				mutex: mu,
 			},
 			args:    args{shortURL: "dqwdwqd"},
 			want:    "https://practicum.yandex.ru/",
@@ -75,7 +70,6 @@ func TestMapStorage_SaveURL(t *testing.T) {
 		shortID string
 		srcURL  string
 	}
-	mu := new(sync.Mutex)
 	tests := []struct {
 		name    string
 		mp      MapStorage
@@ -88,7 +82,6 @@ func TestMapStorage_SaveURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
-				mutex: mu,
 			},
 			args:    args{srcURL: "", shortID: ""},
 			wantErr: true,
@@ -99,7 +92,6 @@ func TestMapStorage_SaveURL(t *testing.T) {
 				urlMap: map[string]string{
 					"dqwdwqd": "https://practicum.yandex.ru/",
 				},
-				mutex: mu,
 			},
 			args:    args{srcURL: "https://github.com/", shortID: "dsdsdds"},
 			wantErr: false,
