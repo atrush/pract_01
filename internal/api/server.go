@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type Server struct {
@@ -12,14 +10,11 @@ type Server struct {
 }
 
 func NewServer(port string, handler Handler) *Server {
-	r := chi.NewRouter()
-	r.Get("/{shortID}", handler.GetURLHandler)
-	r.Post("/", handler.SaveURLHandler)
 
 	return &Server{
 		httpServer: http.Server{
 			Addr:    port,
-			Handler: r,
+			Handler: NewRouter(handler),
 		},
 	}
 }
@@ -30,6 +25,5 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-
 	return s.httpServer.Shutdown(ctx)
 }

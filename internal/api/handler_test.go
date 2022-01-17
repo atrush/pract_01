@@ -36,18 +36,14 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db := inmemory.NewStorage()
 			svc, _ := service.NewShortURLService(db)
-			//require.NoError(t, err, err.Error())
-
 			handler := Handler{svc: svc}
+			r := NewRouter(handler)
 
 			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(tt.body)))
-
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.SaveURLHandler)
-			h.ServeHTTP(w, request)
-			res := w.Result()
-			defer res.Body.Close()
+			r.ServeHTTP(w, request)
 
+			res := w.Result()
 			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
 		})
 	}
@@ -77,21 +73,14 @@ func TestHandler_GetURLHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db := inmemory.NewStorage()
 			svc, _ := service.NewShortURLService(db)
-			//require.NoError(t, err, err.Error())
 			handler := Handler{svc: svc}
+			r := NewRouter(handler)
 
 			request := httptest.NewRequest(http.MethodGet, tt.request, nil)
-
-			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			// определяем хендлер
-			h := http.HandlerFunc(handler.GetURLHandler)
-			// запускаем сервер
-			h.ServeHTTP(w, request)
+			r.ServeHTTP(w, request)
 			res := w.Result()
-			defer res.Body.Close()
 
-			// проверяем код ответа
 			assert.True(t, res.StatusCode == tt.wantCode, "Ожидался код ответа %d, получен %d", tt.wantCode, w.Code)
 		})
 	}
@@ -103,29 +92,27 @@ func Test_testSaveAndGetURL(t *testing.T) {
 
 	db := inmemory.NewStorage()
 	svc, _ := service.NewShortURLService(db)
-	//require.NoError(t, err, err.Error())
 	handler := Handler{svc: svc}
+	r := NewRouter(handler)
+
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
 	w := httptest.NewRecorder()
-	h := http.HandlerFunc(handler.SaveURLHandler)
-	h.ServeHTTP(w, request)
+	r.ServeHTTP(w, request)
 
 	res := w.Result()
-	defer res.Body.Close()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer res.Body.Close()
+
 	shortURL := string(resBody)
 
 	request = httptest.NewRequest(http.MethodGet, shortURL, nil)
 	w = httptest.NewRecorder()
-	h = http.HandlerFunc(handler.GetURLHandler)
-	h.ServeHTTP(w, request)
-
+	r.ServeHTTP(w, request)
 	res = w.Result()
-	defer res.Body.Close()
 
 	assert.True(t, res.StatusCode == 307, "При получении ссылки ожидался код ответа %d, получен %d", 307, w.Code)
 
