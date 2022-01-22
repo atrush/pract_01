@@ -184,7 +184,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 	res = w.Result()
-
+	defer res.Body.Close()
 	assert.True(t, res.StatusCode == 307, "При получении ссылки ожидался код ответа %d, получен %d", 307, w.Code)
 
 	headLocationVal, ok := res.Header[longURLHeader]
