@@ -13,7 +13,7 @@ type Server struct {
 func NewServer(port string, handler Handler) *Server {
 	return &Server{
 		httpServer: http.Server{
-			Addr:    port,
+			Addr:    ":" + port,
 			Handler: NewRouter(handler),
 		},
 	}
