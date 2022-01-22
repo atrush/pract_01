@@ -10,13 +10,15 @@ import (
 )
 
 type Handler struct {
-	svc service.URLShortener
+	svc     service.URLShortener
+	baseURL string
 }
 
-func NewHandler(svc service.URLShortener) *Handler {
+func NewHandler(svc service.URLShortener, baseURL string) *Handler {
 
 	return &Handler{
-		svc: svc,
+		svc:     svc,
+		baseURL: baseURL,
 	}
 }
 
@@ -65,7 +67,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsResult, err := json.Marshal(struct {
 		Result string `json:"result"`
-	}{Result: "http://localhost:8080/" + shortID})
+	}{Result: h.baseURL + shortID})
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -96,7 +98,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortID))
+	w.Write([]byte(h.baseURL + shortID))
 }
 
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
