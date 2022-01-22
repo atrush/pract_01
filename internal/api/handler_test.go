@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -67,6 +68,59 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 				storage.SaveURL("aaaaaa", "https://practicum.yandex.ru/")
 			},
 		},
+		{
+			name:            "POST JSON URL not valid content-type",
+			method:          http.MethodPost,
+			url:             "/api/shorten",
+			body:            "{\"url\": \"https://practicum.yandex.ru/\"}",
+			contentType:     "text/plain; charset=utf-8",
+			outCodeExpected: 400,
+		},
+		{
+			name:            "POST JSON empty URL",
+			method:          http.MethodPost,
+			url:             "/api/shorten",
+			body:            "{\"url\": \"\"}",
+			contentType:     "application/json",
+			outCodeExpected: 400,
+		},
+		{
+			name:            "POST JSON empty body",
+			method:          http.MethodPost,
+			url:             "/api/shorten",
+			body:            "",
+			contentType:     "application/json",
+			outCodeExpected: 400,
+		},
+		{
+			name:            "POST JSON not valid JSON",
+			method:          http.MethodPost,
+			url:             "/api/shorten",
+			body:            "{\"url: \"\"}",
+			contentType:     "application/json",
+			outCodeExpected: 400,
+		},
+		{
+			name:                "POST JSON URL",
+			method:              http.MethodPost,
+			url:                 "/api/shorten",
+			body:                "{\"url\": \"https://practicum.yandex.ru/\"}",
+			contentType:         "application/json",
+			outCodeExpected:     201,
+			outContTypeExpected: "application/json",
+		},
+		{
+			name:                "POST JSON URL",
+			method:              http.MethodPost,
+			url:                 "/api/shorten",
+			body:                "{\"url\": \"https://practicum.yandex.ru/\"}",
+			contentType:         "application/json",
+			outCodeExpected:     201,
+			outContTypeExpected: "application/json",
+			initFixtures: func(storage *inmemory.MapStorage) {
+				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -81,11 +135,23 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			r := NewRouter(*h)
 
 			request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
+			if tt.contentType != "" {
+				request.Header.Set("Content-Type", tt.contentType)
+			}
 			w := httptest.NewRecorder()
+
 			r.ServeHTTP(w, request)
 
 			res := w.Result()
+			resBody, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatal(err)
+
+			}
 			defer res.Body.Close()
+			fmt.Printf("%v: res - %v\n", tt.name, string(resBody))
+			require.True(t, tt.outContTypeExpected == "" || res.Header.Get("Content-Type") == tt.outContTypeExpected,
+				"Ожидался content-type ответа %v, получен %v", tt.outContTypeExpected, res.Header.Get("Content-Type"))
 			assert.True(t, tt.outCodeExpected == 0 || res.StatusCode == tt.outCodeExpected, "Ожидался код ответа %d, получен %d", tt.outCodeExpected, w.Code)
 		})
 	}
@@ -105,12 +171,12 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	r.ServeHTTP(w, request)
 
 	res := w.Result()
-	defer res.Body.Close()
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Fatal(err)
 
 	}
+	defer res.Body.Close()
 
 	shortURL := string(resBody)
 
@@ -118,12 +184,10 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 	res = w.Result()
-	defer res.Body.Close()
 
 	assert.True(t, res.StatusCode == 307, "При получении ссылки ожидался код ответа %d, получен %d", 307, w.Code)
 
 	headLocationVal, ok := res.Header[longURLHeader]
 	require.True(t, ok, "При получении ссылки не получен заголовок %v", longURLHeader)
 	assert.Equal(t, longURL, headLocationVal[0], "Поучена ссылка %v, ожидалась %v", headLocationVal[0], longURL)
-
 }

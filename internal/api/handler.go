@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -17,6 +18,62 @@ func NewHandler(svc service.URLShortener) *Handler {
 	return &Handler{
 		svc: svc,
 	}
+}
+
+func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.badRequestError(w, "Разрешены только POST запросы!")
+		return
+	}
+
+	ct := r.Header.Get("Content-Type")
+	if ct != "application/json" {
+		h.badRequestError(w, "Разрешены запросы только в формате JSON!")
+		return
+	}
+
+	jsBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		h.badRequestError(w, err.Error())
+		return
+	}
+	defer r.Body.Close()
+
+	incoming := make(map[string]string)
+	if err := json.Unmarshal(jsBody, &incoming); err != nil {
+		h.badRequestError(w, "неверный формат JSON")
+		return
+	}
+
+	srcURL, ok := incoming["url"]
+
+	if !ok {
+		h.badRequestError(w, "в запросе не найден параметр url")
+		return
+	}
+
+	if string(srcURL) == "" {
+		h.badRequestError(w, "нельзя сохранить пустую ссылку")
+		return
+	}
+
+	shortID, err := h.svc.SaveURL(string(srcURL))
+	if err != nil {
+		h.badRequestError(w, err.Error())
+		return
+	}
+
+	jsResult, err := json.Marshal(struct {
+		Result string `json:"result"`
+	}{Result: "http://localhost:8080/" + shortID})
+	if err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsResult)
 }
 
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +119,9 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+func (h *Handler) serverError(w http.ResponseWriter, errText string) {
+	http.Error(w, errText, http.StatusInternalServerError)
 }
 
 func (h *Handler) badRequestError(w http.ResponseWriter, errText string) {
