@@ -12,7 +12,7 @@ type Config struct {
 func ReadEnvConfig(cfg *Config) {
 	_ = env.Parse(cfg)
 	if cfg.BaseURL == "" {
-		cfg.BaseURL = "http://localhost:8080/"
+		cfg.BaseURL = "http://localhost:8080"
 	}
 	if cfg.ServerPort == "" {
 		cfg.ServerPort = ":8080"
