@@ -8,18 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/caarlos0/env/v6"
-
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage/inmemory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type Config struct {
-	ServerPort string `env:"SERVER_ADDRESS"`
-	BaseURL    string `env:"BASE_URL"`
-}
 
 func TestHandler_SaveURLHandler(t *testing.T) {
 
@@ -130,10 +123,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		},
 	}
 	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
-		require.NoErrorf(t, err, "не удалось получить конфиг")
-	}
+	ReadEnvConfig(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := inmemory.NewStorage()
@@ -170,10 +160,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 
 func Test_testSaveAndGetURL(t *testing.T) {
 	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
-		require.NoErrorf(t, err, "не удалось получить конфиг")
-	}
+	ReadEnvConfig(&cfg)
 
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
@@ -184,7 +171,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	r := NewRouter(handler)
 
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
-	request.RemoteAddr = "localhost:" + cfg.ServerPort
+	request.RemoteAddr = "localhost" + cfg.ServerPort
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 
@@ -199,7 +186,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	shortURL := string(resBody)
 
 	request = httptest.NewRequest(http.MethodGet, shortURL, nil)
-	request.RemoteAddr = "localhost:" + cfg.ServerPort
+	request.RemoteAddr = "localhost" + cfg.ServerPort
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 	res = w.Result()
