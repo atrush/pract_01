@@ -67,7 +67,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsResult, err := json.Marshal(struct {
 		Result string `json:"result"`
-	}{Result: h.baseURL + shortID})
+	}{Result: h.baseURL + "/" + shortID})
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -98,7 +98,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(h.baseURL + shortID))
+	w.Write([]byte(h.baseURL + "/" + shortID))
 }
 
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
