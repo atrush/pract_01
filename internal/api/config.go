@@ -15,6 +15,6 @@ func ReadEnvConfig(cfg *Config) {
 		cfg.BaseURL = "http://localhost:8080/"
 	}
 	if cfg.ServerPort == "" {
-		cfg.BaseURL = ":8080"
+		cfg.ServerPort = ":8080"
 	}
 }
