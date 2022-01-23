@@ -6,24 +6,14 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/caarlos0/env/v6"
-
 	"github.com/atrush/pract_01.git/internal/api"
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage/inmemory"
 )
 
-type Config struct {
-	ServerPort string `env:"SERVER_ADDRESS"`
-	BaseURL    string `env:"BASE_URL"`
-}
-
 func main() {
-	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatalf("error getting config: %s\n", err.Error())
-	}
+	var cfg api.Config
+	api.ReadEnvConfig(&cfg)
 
 	db := inmemory.NewStorage()
 	svc, err := service.NewShortURLService(db)
