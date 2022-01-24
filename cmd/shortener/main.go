@@ -14,10 +14,11 @@ import (
 )
 
 func main() {
-	var cfg api.Config
-	api.ReadEnvConfig(&cfg)
+	cfg := api.NewConfig()
+	api.ReadEnvConfig(cfg)
+	api.ReadFlagConfig(cfg)
 
-	db, err := getInitDB(cfg)
+	db, err := getInitDB(*cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
