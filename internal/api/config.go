@@ -5,8 +5,9 @@ import (
 )
 
 type Config struct {
-	ServerPort string `env:"SERVER_ADDRESS"`
-	BaseURL    string `env:"BASE_URL"`
+	ServerPort      string `env:"SERVER_ADDRESS"`
+	BaseURL         string `env:"BASE_URL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 }
 
 func ReadEnvConfig(cfg *Config) {
