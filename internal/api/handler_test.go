@@ -122,8 +122,6 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			},
 		},
 	}
-	var cfg Config
-	ReadEnvConfig(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := inmemory.NewStorage()
@@ -159,8 +157,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 }
 
 func Test_testSaveAndGetURL(t *testing.T) {
-	var cfg Config
-	ReadEnvConfig(&cfg)
+	cfg := NewConfig()
 
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
