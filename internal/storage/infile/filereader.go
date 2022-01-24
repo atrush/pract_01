@@ -9,28 +9,28 @@ import (
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
-type FileReader struct {
+type fileReader struct {
 	file    *os.File
 	scanner *bufio.Scanner
 }
 
-func NewFileReader(fileName string) (*FileReader, error) {
+func NewFileReader(fileName string) (*fileReader, error) {
 	file, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации чтения файла: %w", err)
 	}
 
-	return &FileReader{
+	return &fileReader{
 		file:    file,
 		scanner: bufio.NewScanner(file),
 	}, nil
 }
 
-func (f *FileReader) Close() error {
+func (f *fileReader) Close() error {
 	return f.file.Close()
 }
 
-func (f *FileReader) ReadAll() (*map[string]string, error) {
+func (f *fileReader) ReadAll() (*map[string]string, error) {
 	data := make(map[string]string)
 	for f.scanner.Scan() {
 		lineURL := storage.ShortURL{}

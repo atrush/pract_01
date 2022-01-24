@@ -9,28 +9,28 @@ import (
 	"github.com/atrush/pract_01.git/internal/storage"
 )
 
-type FileWriter struct {
+type fileWriter struct {
 	file   *os.File
 	writer *bufio.Writer
 }
 
-func NewFileWriter(filename string) (*FileWriter, error) {
+func NewFileWriter(filename string) (*fileWriter, error) {
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации записи в файл: %w", err)
 	}
 
-	return &FileWriter{
+	return &fileWriter{
 		file:   file,
 		writer: bufio.NewWriter(file),
 	}, nil
 }
 
-func (f *FileWriter) Close() error {
+func (f *fileWriter) Close() error {
 	return f.file.Close()
 }
 
-func (f *FileWriter) WriteURL(shortID string, srcURL string) error {
+func (f *fileWriter) WriteURL(shortID string, srcURL string) error {
 	writeURL := storage.ShortURL{
 		ShortID: shortID,
 		URL:     srcURL,
