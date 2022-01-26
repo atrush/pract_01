@@ -11,12 +11,13 @@ import (
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/atrush/pract_01.git/internal/storage/inmemory"
+	"github.com/atrush/pract_01.git/pkg"
 )
 
 func main() {
-	cfg := api.NewConfig()
-	api.ReadEnvConfig(cfg)
-	api.ReadFlagConfig(cfg)
+	cfg := pkg.NewConfig()
+	pkg.ReadEnvConfig(cfg)
+	pkg.ReadFlagConfig(cfg)
 
 	db, err := getInitDB(*cfg)
 	if err != nil {
@@ -41,7 +42,7 @@ func main() {
 	}
 }
 
-func getInitDB(cfg api.Config) (storage.URLStorer, error) {
+func getInitDB(cfg pkg.Config) (storage.URLStorer, error) {
 	if cfg.FileStoragePath != "" {
 		db, err := infile.NewFileStorage(cfg.FileStoragePath)
 		if err != nil {

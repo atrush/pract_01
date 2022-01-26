@@ -10,6 +10,7 @@ import (
 
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage/inmemory"
+	"github.com/atrush/pract_01.git/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -157,7 +158,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 }
 
 func Test_testSaveAndGetURL(t *testing.T) {
-	cfg := NewConfig()
+	cfg := pkg.NewConfig()
 
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
