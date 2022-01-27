@@ -75,7 +75,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/api/shorten",
 			body:            "{\"url\": \"https://practicum.yandex.ru/\"}",
 			contentType:     "text/plain; charset=utf-8",
-			outCodeExpected: 400,
+			outCodeExpected: 415,
 		},
 		{
 			name:            "POST JSON empty URL",
