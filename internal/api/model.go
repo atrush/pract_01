@@ -6,9 +6,15 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type ShortenRequest struct {
-	SrcURL string `json:"url" validate:"required,url"`
-}
+type (
+	ShortenRequest struct {
+		SrcURL string `json:"url" validate:"required,url"`
+	}
+
+	ShortenResponse struct {
+		Result string `json:"result"`
+	}
+)
 
 func (s *ShortenRequest) Validate() error {
 	validate := validator.New()
@@ -18,8 +24,4 @@ func (s *ShortenRequest) Validate() error {
 	}
 
 	return nil
-}
-
-type ShortenResponse struct {
-	Result string `json:"result"`
 }
