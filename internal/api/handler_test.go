@@ -158,7 +158,10 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 }
 
 func Test_testSaveAndGetURL(t *testing.T) {
-	cfg := pkg.NewConfig()
+	cfg, err := pkg.NewConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"

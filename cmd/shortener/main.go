@@ -16,7 +16,10 @@ import (
 
 func main() {
 
-	cfg := pkg.NewConfig()
+	cfg, err := pkg.NewConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	db, err := getInitDB(*cfg)
 	if err != nil {
