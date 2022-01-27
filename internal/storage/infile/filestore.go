@@ -33,9 +33,9 @@ func (f *FileStorage) GetURL(shortID string) (string, error) {
 	}
 
 	f.RLock()
-	longURL, ok := (f.cache)[shortID]
 	defer f.RUnlock()
 
+	longURL, ok := (f.cache)[shortID]
 	if ok {
 		return longURL, nil
 	}
@@ -66,6 +66,9 @@ func (f *FileStorage) SaveURL(shortID string, srcURL string) (string, error) {
 	return shortID, nil
 }
 func (f *FileStorage) IsAvailableID(shortID string) bool {
+	f.RLock()
+	defer f.RUnlock()
+
 	_, ok := f.cache[shortID]
 
 	return !ok

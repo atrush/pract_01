@@ -54,6 +54,9 @@ func (mp *MapStorage) SaveURL(shortID string, srcURL string) (string, error) {
 	return shortID, nil
 }
 func (mp *MapStorage) IsAvailableID(shortID string) bool {
+	mp.RLock()
+	defer mp.RUnlock()
+
 	_, ok := mp.urlMap[shortID]
 
 	return !ok
