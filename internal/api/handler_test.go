@@ -144,14 +144,15 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 
 			res := w.Result()
 			resBody, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatal(err)
-
-			}
+			require.NoError(t, err)
 			defer res.Body.Close()
+
 			fmt.Printf("%v: res - %v\n", tt.name, string(resBody))
-			require.True(t, tt.outContTypeExpected == "" || res.Header.Get("Content-Type") == tt.outContTypeExpected,
-				"Ожидался content-type ответа %v, получен %v", tt.outContTypeExpected, res.Header.Get("Content-Type"))
+
+			if tt.outContTypeExpected != "" {
+				require.True(t, res.Header.Get("Content-Type") == tt.outContTypeExpected,
+					"Ожидался content-type ответа %v, получен %v", tt.outContTypeExpected, res.Header.Get("Content-Type"))
+			}
 			assert.True(t, tt.outCodeExpected == 0 || res.StatusCode == tt.outCodeExpected, "Ожидался код ответа %d, получен %d", tt.outCodeExpected, w.Code)
 		})
 	}
@@ -178,10 +179,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 
 	res := w.Result()
 	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-
-	}
+	require.NoError(t, err)
 	defer res.Body.Close()
 
 	shortURL := string(resBody)
