@@ -15,9 +15,8 @@ import (
 )
 
 func main() {
+
 	cfg := pkg.NewConfig()
-	pkg.ReadEnvConfig(cfg)
-	pkg.ReadFlagConfig(cfg)
 
 	db, err := getInitDB(*cfg)
 	if err != nil {

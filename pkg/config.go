@@ -12,34 +12,40 @@ type Config struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 }
 
+const (
+	DEF_SERVER_PORT       = ":8080"
+	DEF_BASE_URL          = "http://localhost:8080"
+	DEF_FILE_STORAGE_PATH = ""
+)
+
 func NewConfig() *Config {
-	return &Config{
-		ServerPort: ":8080",
-		BaseURL:    "http://localhost:8080",
-	}
+	cfg := Config{}
+	cfg.readFlagConfig()
+	cfg.readEnvConfig()
+	return &cfg
 }
 
-func ReadEnvConfig(cfg *Config) {
+func (c *Config) readFlagConfig() {
+	serverPort := flag.String("a", DEF_SERVER_PORT, "порт HTTP-сервера")
+	baseURL := flag.String("b", DEF_BASE_URL, "базовый URL для сокращенных ссылок")
+	fileStoragePath := flag.String("f", DEF_FILE_STORAGE_PATH, "путь до файла с сокращёнными URL")
+	flag.Parse()
+
+	c.BaseURL = *baseURL
+	c.FileStoragePath = *fileStoragePath
+	c.ServerPort = *serverPort
+}
+
+func (c *Config) readEnvConfig() {
 	envConfig := &Config{}
 	_ = env.Parse(envConfig)
 	if envConfig.BaseURL != "" {
-		cfg.BaseURL = envConfig.BaseURL
+		c.BaseURL = envConfig.BaseURL
 	}
 	if envConfig.ServerPort != "" {
-		cfg.ServerPort = envConfig.ServerPort
+		c.ServerPort = envConfig.ServerPort
 	}
 	if envConfig.FileStoragePath != "" {
-		cfg.FileStoragePath = envConfig.FileStoragePath
+		c.FileStoragePath = envConfig.FileStoragePath
 	}
-}
-
-func ReadFlagConfig(cfg *Config) {
-	serverPort := flag.String("a", cfg.ServerPort, "порт HTTP-сервера")
-	baseURL := flag.String("b", cfg.BaseURL, "базовый URL для сокращенных ссылок")
-	fileStoragePath := flag.String("f", cfg.FileStoragePath, "путь до файла с сокращёнными URL")
-	flag.Parse()
-
-	cfg.BaseURL = *baseURL
-	cfg.FileStoragePath = *fileStoragePath
-	cfg.ServerPort = *serverPort
 }
