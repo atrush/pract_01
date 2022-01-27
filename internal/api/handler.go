@@ -25,7 +25,7 @@ func NewHandler(svc service.URLShortener, baseURL string) *Handler {
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {
-		h.badRequestError(w, "Разрешены запросы только в формате JSON!")
+		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
 		return
 	}
 
@@ -36,33 +36,25 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	incoming := make(map[string]string)
+	incoming := ShortenRequest{}
 	if err := json.Unmarshal(jsBody, &incoming); err != nil {
 		h.badRequestError(w, "неверный формат JSON")
 		return
 	}
-
-	srcURL, ok := incoming["url"]
-
-	if !ok {
-		h.badRequestError(w, "в запросе не найден параметр url")
+	if err := incoming.Validate(); err != nil {
+		h.badRequestError(w, err.Error())
 		return
 	}
 
-	if string(srcURL) == "" {
-		h.badRequestError(w, "нельзя сохранить пустую ссылку")
-		return
-	}
-
-	shortID, err := h.svc.SaveURL(string(srcURL))
+	shortID, err := h.svc.SaveURL(incoming.SrcURL)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
 	}
 
-	jsResult, err := json.Marshal(struct {
-		Result string `json:"result"`
-	}{Result: h.baseURL + "/" + shortID})
+	jsResult, err := json.Marshal(ShortenResponse{
+		Result: h.baseURL + "/" + shortID,
+	})
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -76,7 +68,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		h.badRequestError(w, err.Error())
+		h.serverError(w, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -123,6 +115,10 @@ func (h *Handler) serverError(w http.ResponseWriter, errText string) {
 
 func (h *Handler) badRequestError(w http.ResponseWriter, errText string) {
 	http.Error(w, errText, http.StatusBadRequest)
+}
+
+func (h *Handler) unsupportedMediaTypeError(w http.ResponseWriter, errText string) {
+	http.Error(w, errText, http.StatusUnsupportedMediaType)
 }
 
 func (h *Handler) notFoundError(w http.ResponseWriter) {
