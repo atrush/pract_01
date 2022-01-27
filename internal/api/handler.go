@@ -23,11 +23,6 @@ func NewHandler(svc service.URLShortener, baseURL string) *Handler {
 }
 
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		h.badRequestError(w, "Разрешены только POST запросы!")
-		return
-	}
-
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {
 		h.badRequestError(w, "Разрешены запросы только в формате JSON!")
