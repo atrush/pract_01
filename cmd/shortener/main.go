@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/atrush/pract_01.git/internal/api"
 	"github.com/atrush/pract_01.git/internal/service"
@@ -33,19 +32,14 @@ func main() {
 	}
 	handler := api.NewHandler(svc, cfg.BaseURL)
 
-	ctx, ctxCancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer ctxCancel()
-
 	server := api.NewServer(cfg.ServerPort, *handler)
 	log.Fatal(server.Run())
 
-	<-ctx.Done()
-	ctxCancel()
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, os.Interrupt)
+	<-sigc
 
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(timeoutCtx); err != nil {
+	if err := server.Shutdown(context.Background()); err != nil {
 		log.Fatalf("error shutdown server: %s\n", err.Error())
 	}
 }
