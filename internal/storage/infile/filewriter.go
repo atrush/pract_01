@@ -14,7 +14,7 @@ type fileWriter struct {
 	writer *bufio.Writer
 }
 
-func NewFileWriter(filename string) (*fileWriter, error) {
+func newFileWriter(filename string) (*fileWriter, error) {
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации записи в файл: %w", err)

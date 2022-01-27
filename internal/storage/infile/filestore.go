@@ -72,7 +72,7 @@ func (f *FileStorage) IsAvailableID(shortID string) bool {
 }
 
 func (f *FileStorage) writeToFile(shortID string, srcURL string) error {
-	fileWriter, err := NewFileWriter(f.fileName)
+	fileWriter, err := newFileWriter(f.fileName)
 	if err != nil {
 		return fmt.Errorf("ошибка записи в хранилище: %w", err)
 	}
@@ -86,7 +86,7 @@ func (f *FileStorage) writeToFile(shortID string, srcURL string) error {
 }
 
 func (f *FileStorage) initFromFile() error {
-	fileReader, err := NewFileReader(f.fileName)
+	fileReader, err := newFileReader(f.fileName)
 	if err != nil {
 		return fmt.Errorf("ошибка чтения из хранилища: %w", err)
 	}
