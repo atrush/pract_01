@@ -14,7 +14,7 @@ type fileReader struct {
 	scanner *bufio.Scanner
 }
 
-func NewFileReader(fileName string) (*fileReader, error) {
+func newFileReader(fileName string) (*fileReader, error) {
 	file, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации чтения файла: %w", err)
@@ -30,7 +30,7 @@ func (f *fileReader) Close() error {
 	return f.file.Close()
 }
 
-func (f *fileReader) ReadAll() (*map[string]string, error) {
+func (f *fileReader) ReadAll() (map[string]string, error) {
 	data := make(map[string]string)
 	for f.scanner.Scan() {
 		lineURL := storage.ShortURL{}
@@ -44,5 +44,5 @@ func (f *fileReader) ReadAll() (*map[string]string, error) {
 		return nil, fmt.Errorf("ошибка чтения файла: %w", err)
 	}
 
-	return &data, nil
+	return data, nil
 }

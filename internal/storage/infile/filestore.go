@@ -12,14 +12,13 @@ var _ storage.URLStorer = (*FileStorage)(nil)
 
 type FileStorage struct {
 	fileName string
-	cache    *map[string]string
-	mutex    sync.RWMutex
+	cache    map[string]string
+	sync.RWMutex
 }
 
 func NewFileStorage(fileName string) (*FileStorage, error) {
 	fileStorage := FileStorage{
 		fileName: fileName,
-		mutex:    sync.RWMutex{},
 	}
 	if err := fileStorage.initFromFile(); err != nil {
 		return nil, fmt.Errorf("ошибка инициализации хранилища: %w", err)
@@ -33,9 +32,9 @@ func (f *FileStorage) GetURL(shortID string) (string, error) {
 		return "", errors.New("нельзя использовать пустой id")
 	}
 
-	f.mutex.RLock()
-	longURL, ok := (*f.cache)[shortID]
-	defer f.mutex.RUnlock()
+	f.RLock()
+	longURL, ok := (f.cache)[shortID]
+	defer f.RUnlock()
 
 	if ok {
 		return longURL, nil
@@ -55,19 +54,19 @@ func (f *FileStorage) SaveURL(shortID string, srcURL string) (string, error) {
 		return "", errors.New("id уже существует")
 	}
 
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+	f.Lock()
+	defer f.Unlock()
 
 	if err := f.writeToFile(shortID, srcURL); err != nil {
 		return "", err
 	}
 
-	(*f.cache)[shortID] = srcURL
+	f.cache[shortID] = srcURL
 
 	return shortID, nil
 }
 func (f *FileStorage) IsAvailableID(shortID string) bool {
-	_, ok := (*f.cache)[shortID]
+	_, ok := f.cache[shortID]
 
 	return !ok
 }
