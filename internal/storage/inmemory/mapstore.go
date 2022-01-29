@@ -11,14 +11,13 @@ var _ storage.URLStorer = (*MapStorage)(nil)
 
 type MapStorage struct {
 	urlMap map[string]string
-	mutex  *sync.RWMutex
+	sync.RWMutex
 }
 
 func NewStorage() *MapStorage {
 
 	return &MapStorage{
 		urlMap: make(map[string]string),
-		mutex:  &sync.RWMutex{},
 	}
 }
 
@@ -27,9 +26,9 @@ func (mp *MapStorage) GetURL(shortID string) (string, error) {
 		return "", errors.New("нельзя использовать пустой id")
 	}
 
-	mp.mutex.RLock()
+	mp.RLock()
 	longURL, ok := mp.urlMap[shortID]
-	defer mp.mutex.RUnlock()
+	defer mp.RUnlock()
 
 	if ok {
 		return longURL, nil
@@ -48,13 +47,16 @@ func (mp *MapStorage) SaveURL(shortID string, srcURL string) (string, error) {
 		return "", errors.New("id уже существует")
 	}
 
-	mp.mutex.Lock()
+	mp.Lock()
 	mp.urlMap[shortID] = srcURL
-	defer mp.mutex.Unlock()
+	defer mp.Unlock()
 
 	return shortID, nil
 }
 func (mp *MapStorage) IsAvailableID(shortID string) bool {
+	mp.RLock()
+	defer mp.RUnlock()
+
 	_, ok := mp.urlMap[shortID]
 
 	return !ok

@@ -1,63 +1,62 @@
 package inmemory
 
 import (
-	"sync"
 	"testing"
 
+	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMapStorage_GetURL(t *testing.T) {
-	type args struct {
-		shortURL string
-	}
+
 	tests := []struct {
-		name    string
-		mp      MapStorage
-		args    args
-		want    string
-		wantErr bool
+		name         string
+		shortID      string
+		want         string
+		wantErr      bool
+		initFixtures func(storage *MapStorage)
 	}{
 		{
-			name: "empty shortUrl",
-			mp: MapStorage{
-				urlMap: map[string]string{
-					"dqwdwqd": "https://practicum.yandex.ru/",
-				},
-				mutex: &sync.RWMutex{},
-			},
-			args:    args{shortURL: ""},
+			name:    "empty shortID",
+			shortID: "",
 			wantErr: true,
+			initFixtures: func(storage *MapStorage) {
+				storage.SaveURL("dsfdfd", "https://practicum.yandex.ru/")
+			},
 		},
 		{
-			name: "find shortUrl",
-			mp: MapStorage{
-				urlMap: map[string]string{
-					"dqwdwqd": "https://practicum.yandex.ru/",
-				},
-				mutex: &sync.RWMutex{},
-			},
-			args:    args{shortURL: "dqwdwqd"},
+			name:    "exist shortID",
+			shortID: "dsfdfd",
 			want:    "https://practicum.yandex.ru/",
 			wantErr: false,
+			initFixtures: func(storage *MapStorage) {
+				storage.SaveURL("dsfdfd", "https://practicum.yandex.ru/")
+			},
 		},
 		{
-			name: "not find shortUrl",
-			mp: MapStorage{
-				urlMap: map[string]string{
-					"dqwdwqd": "https://practicum.yandex.ru/",
-				},
-				mutex: &sync.RWMutex{},
-			},
-			args:    args{shortURL: "111111"},
+			name:    "not exist shortID in empty storage",
 			want:    "",
+			shortID: "dsfdfd",
 			wantErr: false,
+		},
+		{
+			name:    "not exist shortID in not empty storage",
+			want:    "",
+			shortID: "dsfdfd",
+			wantErr: false,
+			initFixtures: func(storage *MapStorage) {
+				storage.SaveURL("dhygff", "https://practicum.yandex.ru/")
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.mp.GetURL(tt.args.shortURL)
+			db := NewStorage()
+			if tt.initFixtures != nil {
+				tt.initFixtures(db)
+			}
+			got, err := db.GetURL(tt.shortID)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
@@ -70,46 +69,41 @@ func TestMapStorage_GetURL(t *testing.T) {
 }
 
 func TestMapStorage_SaveURL(t *testing.T) {
-	type args struct {
-		shortID string
-		srcURL  string
-	}
 	tests := []struct {
-		name    string
-		mp      MapStorage
-		args    args
-		wantErr bool
+		name         string
+		url          storage.ShortURL
+		want         string
+		wantErr      bool
+		initFixtures func(storage *MapStorage)
 	}{
 		{
-			name: "empty URL",
-			mp: MapStorage{
-				urlMap: map[string]string{
-					"dqwdwqd": "https://practicum.yandex.ru/",
-				},
-				mutex: &sync.RWMutex{},
-			},
-			args:    args{srcURL: "", shortID: ""},
+			name:    "empty shortID",
+			url:     storage.ShortURL{ShortID: "", URL: "https://practicum.yandex.ru/"},
 			wantErr: true,
 		},
 		{
-			name: "add URL",
-			mp: MapStorage{
-				urlMap: map[string]string{
-					"dqwdwqd": "https://practicum.yandex.ru/",
-				},
-				mutex: &sync.RWMutex{},
-			},
-			args:    args{srcURL: "https://github.com/", shortID: "dsdsdds"},
+			name:    "empty srcURL",
+			url:     storage.ShortURL{ShortID: "xfdafds", URL: ""},
+			wantErr: true,
+		},
+		{
+			name:    "add URL",
+			url:     storage.ShortURL{ShortID: "xfdafds", URL: "https://practicum.yandex.ru/"},
 			wantErr: false,
+			want:    "xfdafds",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.mp.SaveURL(tt.args.shortID, tt.args.srcURL)
+			db := NewStorage()
+			if tt.initFixtures != nil {
+				tt.initFixtures(db)
+			}
+			got, err := db.SaveURL(tt.url.ShortID, tt.url.URL)
 			if !tt.wantErr {
 				require.NoError(t, err)
-				assert.Contains(t, tt.mp.urlMap, got)
-				assert.Equal(t, tt.mp.urlMap[got], tt.args.srcURL)
+				assert.Equal(t, tt.want, got)
 
 				return
 			}
