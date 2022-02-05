@@ -7,12 +7,22 @@ import (
 
 func NewRouter(handler Handler) *chi.Mux {
 	r := chi.NewRouter()
+
+	r.Use(middleware.Compress(5, "text/html",
+		"text/css",
+		"text/plain",
+		"text/javascript",
+		"application/javascript",
+		"application/x-javascript",
+		"application/json",
+		"application/atom+xml",
+		"application/rss+xml",
+		"image/svg+xml"))
+	r.Use(gzipReaderHandle)
+
 	r.Get("/{shortID}", handler.GetURLHandler)
 	r.Post("/", handler.SaveURLHandler)
 	r.Post("/api/shorten", handler.SaveURLJSONHandler)
-
-	compressor := middleware.NewCompressor(5, "/*")
-	r.Use(compressor.Handler)
 
 	return r
 }
