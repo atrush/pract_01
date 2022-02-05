@@ -84,6 +84,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(h.baseURL + "/" + shortID))
 }
@@ -105,7 +106,7 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		h.notFoundError(w)
 		return
 	}
-
+	w.Header().Set("content-type", "text/plain")
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
