@@ -5,7 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(handler Handler) *chi.Mux {
+func NewRouter(handler Handler, auth Auth) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Compress(5, "text/html",
@@ -19,7 +19,9 @@ func NewRouter(handler Handler) *chi.Mux {
 		"application/rss+xml",
 		"image/svg+xml"))
 	r.Use(gzipReaderHandle)
+	r.Use(auth.Middleware)
 
+	r.Get("/api/userID", handler.GetUserID)
 	r.Get("/{shortID}", handler.GetURLHandler)
 	r.Post("/", handler.SaveURLHandler)
 	r.Post("/api/shorten", handler.SaveURLJSONHandler)

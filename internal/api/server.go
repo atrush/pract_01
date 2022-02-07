@@ -10,11 +10,11 @@ type Server struct {
 	httpServer http.Server
 }
 
-func NewServer(port string, handler Handler) *Server {
+func NewServer(port string, handler Handler, auth Auth) *Server {
 	return &Server{
 		httpServer: http.Server{
 			Addr:    port,
-			Handler: NewRouter(handler),
+			Handler: NewRouter(handler, auth),
 		},
 	}
 }

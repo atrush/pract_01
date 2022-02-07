@@ -22,6 +22,14 @@ func NewHandler(svc service.URLShortener, baseURL string) *Handler {
 	}
 }
 
+func (h *Handler) GetUserID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "text/plain")
+	w.WriteHeader(http.StatusCreated)
+
+	userID := r.Context().Value(ContextKeyUserID).(string)
+	w.Write([]byte(userID))
+}
+
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {

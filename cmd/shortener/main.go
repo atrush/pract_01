@@ -30,9 +30,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	handler := api.NewHandler(svc, cfg.BaseURL)
 
-	server := api.NewServer(cfg.ServerPort, *handler)
+	handler := api.NewHandler(svc, cfg.BaseURL)
+	auth := api.NewAuth()
+	server := api.NewServer(cfg.ServerPort, *handler, *auth)
+
 	log.Fatal(server.Run())
 
 	sigc := make(chan os.Signal, 1)

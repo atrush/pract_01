@@ -132,7 +132,8 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 
 			svc, _ := service.NewShortURLService(db)
 			h := &Handler{svc: svc}
-			r := NewRouter(*h)
+			a := NewAuth()
+			r := NewRouter(*h, *a)
 
 			request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
 			if tt.contentType != "" {
@@ -170,7 +171,8 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	db := inmemory.NewStorage()
 	svc, _ := service.NewShortURLService(db)
 	handler := Handler{svc: svc, baseURL: cfg.BaseURL}
-	r := NewRouter(handler)
+	a := NewAuth()
+	r := NewRouter(handler, *a)
 
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
 	request.RemoteAddr = "localhost" + cfg.ServerPort
