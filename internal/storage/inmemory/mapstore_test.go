@@ -22,7 +22,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 			shortID: "",
 			wantErr: true,
 			initFixtures: func(storage *MapStorage) {
-				storage.SaveURL("dsfdfd", "https://practicum.yandex.ru/")
+				storage.SaveURL("dsfdfd", "https://practicum.yandex.ru/", "")
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 			want:    "https://practicum.yandex.ru/",
 			wantErr: false,
 			initFixtures: func(storage *MapStorage) {
-				storage.SaveURL("dsfdfd", "https://practicum.yandex.ru/")
+				storage.SaveURL("dsfdfd", "https://practicum.yandex.ru/", "")
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestMapStorage_GetURL(t *testing.T) {
 			shortID: "dsfdfd",
 			wantErr: false,
 			initFixtures: func(storage *MapStorage) {
-				storage.SaveURL("dhygff", "https://practicum.yandex.ru/")
+				storage.SaveURL("dhygff", "https://practicum.yandex.ru/", "")
 			},
 		},
 	}
@@ -78,17 +78,17 @@ func TestMapStorage_SaveURL(t *testing.T) {
 	}{
 		{
 			name:    "empty shortID",
-			url:     storage.ShortURL{ShortID: "", URL: "https://practicum.yandex.ru/"},
+			url:     storage.ShortURL{ShortID: "", URL: "https://practicum.yandex.ru/", UserID: ""},
 			wantErr: true,
 		},
 		{
 			name:    "empty srcURL",
-			url:     storage.ShortURL{ShortID: "xfdafds", URL: ""},
+			url:     storage.ShortURL{ShortID: "xfdafds", URL: "", UserID: ""},
 			wantErr: true,
 		},
 		{
 			name:    "add URL",
-			url:     storage.ShortURL{ShortID: "xfdafds", URL: "https://practicum.yandex.ru/"},
+			url:     storage.ShortURL{ShortID: "xfdafds", URL: "https://practicum.yandex.ru/", UserID: ""},
 			wantErr: false,
 			want:    "xfdafds",
 		},
@@ -100,7 +100,7 @@ func TestMapStorage_SaveURL(t *testing.T) {
 			if tt.initFixtures != nil {
 				tt.initFixtures(db)
 			}
-			got, err := db.SaveURL(tt.url.ShortID, tt.url.URL)
+			got, err := db.SaveURL(tt.url.ShortID, tt.url.URL, tt.url.UserID)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)

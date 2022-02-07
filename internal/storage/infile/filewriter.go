@@ -30,10 +30,11 @@ func (f *fileWriter) Close() error {
 	return f.file.Close()
 }
 
-func (f *fileWriter) WriteURL(shortID string, srcURL string) error {
+func (f *fileWriter) WriteURL(shortID string, srcURL string, userID string) error {
 	writeURL := storage.ShortURL{
 		ShortID: shortID,
 		URL:     srcURL,
+		UserID:  userID,
 	}
 
 	jsURL, err := json.Marshal(writeURL)

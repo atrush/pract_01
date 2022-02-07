@@ -30,13 +30,13 @@ func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 	return longURL, nil
 }
 
-func (sh *ShortURLService) SaveURL(srcURL string) (string, error) {
+func (sh *ShortURLService) SaveURL(srcURL string, userID string) (string, error) {
 	shortID, err := sh.genShortURL(string(srcURL))
 	if err != nil {
 		return "", err
 	}
 
-	_, err = sh.db.SaveURL(shortID, string(srcURL))
+	_, err = sh.db.SaveURL(shortID, string(srcURL), userID)
 	if err != nil {
 		return "", err
 	}

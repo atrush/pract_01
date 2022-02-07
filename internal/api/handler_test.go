@@ -51,7 +51,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			body:            "https://practicum.yandex.ru/",
 			outCodeExpected: 201,
 			initFixtures: func(storage *inmemory.MapStorage) {
-				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/")
+				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/aaaaaa",
 			outCodeExpected: 307,
 			initFixtures: func(storage *inmemory.MapStorage) {
-				storage.SaveURL("aaaaaa", "https://practicum.yandex.ru/")
+				storage.SaveURL("aaaaaa", "https://practicum.yandex.ru/", "")
 			},
 		},
 		{
@@ -119,7 +119,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			outCodeExpected:     201,
 			outContTypeExpected: "application/json",
 			initFixtures: func(storage *inmemory.MapStorage) {
-				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/")
+				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
 			},
 		},
 	}

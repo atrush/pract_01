@@ -26,7 +26,7 @@ func (h *Handler) GetUserID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	userID := r.Context().Value(ContextKeyUserID).(string)
+	userID := h.getUserIDFromContext(r)
 	w.Write([]byte(userID))
 }
 
@@ -54,7 +54,8 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortID, err := h.svc.SaveURL(incoming.SrcURL)
+	userID := h.getUserIDFromContext(r)
+	shortID, err := h.svc.SaveURL(incoming.SrcURL, userID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
@@ -86,7 +87,8 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortID, err := h.svc.SaveURL(string(srcURL))
+	userID := h.getUserIDFromContext(r)
+	shortID, err := h.svc.SaveURL(string(srcURL), userID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
@@ -118,6 +120,10 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
+func (h *Handler) getUserIDFromContext(r *http.Request) string {
+	return r.Context().Value(ContextKeyUserID).(string)
+}
+
 func (h *Handler) serverError(w http.ResponseWriter, errText string) {
 	http.Error(w, errText, http.StatusInternalServerError)
 }
