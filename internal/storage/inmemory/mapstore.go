@@ -8,17 +8,44 @@ import (
 )
 
 var _ storage.URLStorer = (*MapStorage)(nil)
+var _ storage.UserStorer = (*MapStorage)(nil)
 
 type MapStorage struct {
-	urlMap map[string]storage.ShortURL
+	urlMap  map[string]storage.ShortURL
+	userMap map[string]string
 	sync.RWMutex
 }
 
 func NewStorage() *MapStorage {
 
 	return &MapStorage{
-		urlMap: make(map[string]storage.ShortURL),
+		urlMap:  make(map[string]storage.ShortURL),
+		userMap: make(map[string]string),
 	}
+}
+
+func (mp *MapStorage) AddUser(userID string) error {
+	if userID == "" {
+		return errors.New("нельзя использовать пустой id")
+	}
+	if !mp.IsAvailableID(userID) {
+		return errors.New("id уже существует")
+	}
+
+	mp.Lock()
+	mp.userMap[userID] = userID
+	defer mp.Unlock()
+
+	return nil
+}
+
+func (mp *MapStorage) IsAvailableUserID(userID string) bool {
+	mp.RLock()
+	defer mp.RUnlock()
+
+	_, ok := mp.userMap[userID]
+
+	return !ok
 }
 
 func (mp *MapStorage) GetURL(shortID string) (string, error) {
@@ -45,6 +72,9 @@ func (mp *MapStorage) SaveURL(shortID string, srcURL string, userID string) (str
 	}
 	if !mp.IsAvailableID(shortID) {
 		return "", errors.New("id уже существует")
+	}
+	if userID != "" && mp.IsAvailableUserID(userID) {
+		return "", errors.New("пользователь не найден")
 	}
 
 	mp.Lock()

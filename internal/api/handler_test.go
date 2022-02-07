@@ -131,8 +131,9 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			}
 
 			svc, _ := service.NewShortURLService(db)
+			userSvc, _ := service.NewUserService(db)
 			h := &Handler{svc: svc}
-			a := NewAuth()
+			a := NewAuth(userSvc)
 			r := NewRouter(*h, *a)
 
 			request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
@@ -169,9 +170,10 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	longURLHeader := "Location"
 
 	db := inmemory.NewStorage()
+	userSvc, _ := service.NewUserService(db)
 	svc, _ := service.NewShortURLService(db)
 	handler := Handler{svc: svc, baseURL: cfg.BaseURL}
-	a := NewAuth()
+	a := NewAuth(userSvc)
 	r := NewRouter(handler, *a)
 
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))

@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var _ URLShortener = (*ShortURLService)(nil)
+
 type ShortURLService struct {
 	db storage.URLStorer
 }

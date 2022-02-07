@@ -9,10 +9,12 @@ import (
 )
 
 var _ storage.URLStorer = (*FileStorage)(nil)
+var _ storage.UserStorer = (*FileStorage)(nil)
 
 type FileStorage struct {
-	fileName string
-	cache    map[string]storage.ShortURL
+	fileName  string
+	urlCache  map[string]storage.ShortURL
+	userCache map[string]string
 	sync.RWMutex
 }
 
@@ -27,6 +29,30 @@ func NewFileStorage(fileName string) (*FileStorage, error) {
 	return &fileStorage, nil
 }
 
+func (mp *FileStorage) AddUser(userID string) error {
+	if userID == "" {
+		return errors.New("нельзя использовать пустой id")
+	}
+	if !mp.IsAvailableID(userID) {
+		return errors.New("id уже существует")
+	}
+
+	mp.Lock()
+	mp.userCache[userID] = userID
+	defer mp.Unlock()
+
+	return nil
+}
+
+func (mp *FileStorage) IsAvailableUserID(userID string) bool {
+	mp.RLock()
+	defer mp.RUnlock()
+
+	_, ok := mp.userCache[userID]
+
+	return !ok
+}
+
 func (f *FileStorage) GetURL(shortID string) (string, error) {
 	if shortID == "" {
 		return "", errors.New("нельзя использовать пустой id")
@@ -35,7 +61,7 @@ func (f *FileStorage) GetURL(shortID string) (string, error) {
 	f.RLock()
 	defer f.RUnlock()
 
-	item, ok := (f.cache)[shortID]
+	item, ok := (f.urlCache)[shortID]
 	if ok {
 		return item.URL, nil
 	}
@@ -53,6 +79,9 @@ func (f *FileStorage) SaveURL(shortID string, srcURL string, userID string) (str
 	if !f.IsAvailableID(shortID) {
 		return "", errors.New("id уже существует")
 	}
+	if userID != "" && f.IsAvailableUserID(userID) {
+		return "", errors.New("пользователь не найден")
+	}
 
 	f.Lock()
 	defer f.Unlock()
@@ -61,7 +90,7 @@ func (f *FileStorage) SaveURL(shortID string, srcURL string, userID string) (str
 		return "", err
 	}
 
-	f.cache[shortID] = storage.ShortURL{
+	f.urlCache[shortID] = storage.ShortURL{
 		ShortID: shortID,
 		URL:     srcURL,
 		UserID:  userID,
@@ -73,7 +102,7 @@ func (f *FileStorage) IsAvailableID(shortID string) bool {
 	f.RLock()
 	defer f.RUnlock()
 
-	_, ok := f.cache[shortID]
+	_, ok := f.urlCache[shortID]
 
 	return !ok
 }
@@ -103,7 +132,16 @@ func (f *FileStorage) initFromFile() error {
 	if err != nil {
 		return fmt.Errorf("ошибка чтения из хранилища: %w", err)
 	}
-	f.cache = data
+	f.urlCache = data
+
+	f.userCache = map[string]string{}
+	if len(data) > 0 {
+		for _, v := range data {
+			if v.UserID != "" && f.IsAvailableUserID(v.UserID) {
+				f.userCache[v.UserID] = v.UserID
+			}
+		}
+	}
 
 	return nil
 }

@@ -8,5 +8,5 @@ type URLStorer interface {
 
 type UserStorer interface {
 	AddUser(userID string) error
-	IsAvailableUserID(userID string) (bool, error)
+	IsAvailableUserID(userID string) bool
 }

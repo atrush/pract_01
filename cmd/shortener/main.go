@@ -31,8 +31,13 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	userSvc, err := service.NewUserService(db.(storage.UserStorer))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	handler := api.NewHandler(svc, cfg.BaseURL)
-	auth := api.NewAuth()
+	auth := api.NewAuth(userSvc)
 	server := api.NewServer(cfg.ServerPort, *handler, *auth)
 
 	log.Fatal(server.Run())

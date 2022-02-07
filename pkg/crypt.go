@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"crypto/aes"
-	"crypto/rand"
 	"fmt"
 )
 
@@ -34,18 +33,8 @@ func (c *Crypt) DecodeToken(token []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ошибка дешифрации: %w", err)
 	}
-	dst := make([]byte, aes.BlockSize) // расшифровываем
+	dst := make([]byte, aes.BlockSize)
 	aesblock.Decrypt(dst, token)
 
 	return dst, nil
-}
-
-func (c *Crypt) GenerateRandom(size int) ([]byte, error) {
-	b := make([]byte, size)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
 }

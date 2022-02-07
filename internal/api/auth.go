@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/pkg"
 )
 
 type (
 	Auth struct {
 		crypt pkg.Crypt
+		svc   service.UserManager
 	}
 	contextKey string
 )
@@ -21,9 +23,10 @@ var (
 	ContextKeyUserID = contextKey("user-id")
 )
 
-func NewAuth() *Auth {
+func NewAuth(svc service.UserManager) *Auth {
 	return &Auth{
 		crypt: *pkg.NewCrypt(),
+		svc:   svc,
 	}
 }
 
@@ -75,7 +78,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (string, error) 
 }
 
 func (a *Auth) newUser() (string, string, error) {
-	newUserID, err := a.genUserID()
+	newUserID, err := a.svc.AddUser()
 	if err != nil {
 		return "", "", err
 	}
@@ -85,24 +88,5 @@ func (a *Auth) newUser() (string, string, error) {
 		return "", "", err
 	}
 
-	return newUserID, string(toHEX(newToken)), nil
-}
-
-func (a *Auth) genUserID() (string, error) {
-	rand, err := a.crypt.GenerateRandom(16)
-	if err != nil {
-		return "", fmt.Errorf("ошибка генерации ID пользователя:%w", err)
-	}
-
-	hexToken := make([]byte, hex.EncodedLen(len(rand)))
-	hex.Encode(hexToken, rand)
-
-	return string(toHEX(rand)[:16]), nil
-}
-
-func toHEX(src []byte) []byte {
-	dst := make([]byte, hex.EncodedLen(len(src)))
-	hex.Encode(dst, src)
-
-	return dst
+	return newUserID, string(service.ToHEX(newToken)), nil
 }
