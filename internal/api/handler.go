@@ -22,12 +22,37 @@ func NewHandler(svc service.URLShortener, baseURL string) *Handler {
 	}
 }
 
-func (h *Handler) GetUserID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
-
+func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserIDFromContext(r)
-	w.Write([]byte(userID))
+	urlList, err := h.svc.GetUserURLList(userID)
+	if err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	if urlList == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	responseArr := make([]ShortenListResponse, 0, len(urlList))
+	for _, v := range urlList {
+		responseArr = append(responseArr, ShortenListResponse{
+			ShortURL: h.baseURL + "/" + v.ShortID,
+			SrcURL:   v.URL,
+		})
+	}
+
+	jsResult, err := json.Marshal(responseArr)
+	if err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	w.Write([]byte(jsResult))
 }
 
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {

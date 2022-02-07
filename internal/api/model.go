@@ -14,6 +14,11 @@ type (
 	ShortenResponse struct {
 		Result string `json:"result"`
 	}
+
+	ShortenListResponse struct {
+		ShortURL string `json:"short_url"`
+		SrcURL   string `json:"original_url"`
+	}
 )
 
 func (s *ShortenRequest) Validate() error {

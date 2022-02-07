@@ -21,7 +21,7 @@ func NewRouter(handler Handler, auth Auth) *chi.Mux {
 	r.Use(gzipReaderHandle)
 	r.Use(auth.Middleware)
 
-	r.Get("/api/userID", handler.GetUserID)
+	r.Get("/user/urls", handler.GetUserUrls)
 	r.Get("/{shortID}", handler.GetURLHandler)
 	r.Post("/", handler.SaveURLHandler)
 	r.Post("/api/shorten", handler.SaveURLJSONHandler)

@@ -24,6 +24,29 @@ func NewStorage() *MapStorage {
 	}
 }
 
+func (mp *MapStorage) GetUserURLList(userID string) ([]storage.ShortURL, error) {
+	if userID == "" {
+		return nil, errors.New("нельзя использовать пустой id")
+	}
+
+	if len(mp.urlMap) == 0 {
+		return nil, nil
+	}
+
+	userURLs := make([]storage.ShortURL, 0, len(mp.urlMap))
+	for _, v := range mp.urlMap {
+		if v.UserID == userID {
+			userURLs = append(userURLs, v)
+		}
+	}
+
+	if len(userURLs) == 0 {
+		return nil, nil
+	}
+
+	return userURLs, nil
+}
+
 func (mp *MapStorage) AddUser(userID string) error {
 	if userID == "" {
 		return errors.New("нельзя использовать пустой id")

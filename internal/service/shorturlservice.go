@@ -23,6 +23,15 @@ func NewShortURLService(db storage.URLStorer) (*ShortURLService, error) {
 	}, nil
 }
 
+func (sh *ShortURLService) GetUserURLList(userID string) ([]storage.ShortURL, error) {
+	list, err := sh.db.GetUserURLList(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
 func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 	longURL, err := sh.db.GetURL(shortID)
 	if err != nil {

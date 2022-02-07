@@ -18,6 +18,29 @@ type FileStorage struct {
 	sync.RWMutex
 }
 
+func (f *FileStorage) GetUserURLList(userID string) ([]storage.ShortURL, error) {
+	if userID == "" {
+		return nil, errors.New("нельзя использовать пустой id")
+	}
+
+	if len(f.urlCache) == 0 {
+		return nil, nil
+	}
+
+	userURLs := make([]storage.ShortURL, 0, len(f.urlCache))
+	for _, v := range f.urlCache {
+		if v.UserID == userID {
+			userURLs = append(userURLs, v)
+		}
+	}
+
+	if len(userURLs) == 0 {
+		return nil, nil
+	}
+
+	return userURLs, nil
+}
+
 func NewFileStorage(fileName string) (*FileStorage, error) {
 	fileStorage := FileStorage{
 		fileName: fileName,
