@@ -52,26 +52,26 @@ func NewFileStorage(fileName string) (*FileStorage, error) {
 	return &fileStorage, nil
 }
 
-func (mp *FileStorage) AddUser(userID string) error {
+func (f *FileStorage) AddUser(userID string) error {
 	if userID == "" {
 		return errors.New("нельзя использовать пустой id")
 	}
-	if !mp.IsAvailableID(userID) {
+	if !f.IsAvailableID(userID) {
 		return errors.New("id уже существует")
 	}
 
-	mp.Lock()
-	mp.userCache[userID] = userID
-	defer mp.Unlock()
+	f.Lock()
+	f.userCache[userID] = userID
+	defer f.Unlock()
 
 	return nil
 }
 
-func (mp *FileStorage) IsAvailableUserID(userID string) bool {
-	mp.RLock()
-	defer mp.RUnlock()
+func (f *FileStorage) IsAvailableUserID(userID string) bool {
+	f.RLock()
+	defer f.RUnlock()
 
-	_, ok := mp.userCache[userID]
+	_, ok := f.userCache[userID]
 
 	return !ok
 }
