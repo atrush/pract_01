@@ -6,20 +6,38 @@ import (
 	"net/http"
 
 	"github.com/atrush/pract_01.git/internal/service"
+	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
 	svc     service.URLShortener
+	psDB    *psql.Storage
 	baseURL string
 }
 
-func NewHandler(svc service.URLShortener, baseURL string) *Handler {
+func NewHandler(svc service.URLShortener, psDB *psql.Storage, baseURL string) *Handler {
 
 	return &Handler{
 		svc:     svc,
+		psDB:    psDB,
 		baseURL: baseURL,
 	}
+}
+
+// Check db connection
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	if h.psDB == nil {
+		h.serverError(w, "база данных не инициирована")
+		return
+	}
+
+	if err := h.psDB.Ping(); err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
