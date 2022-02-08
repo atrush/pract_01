@@ -23,14 +23,14 @@ type (
 // Creates a new Storage.
 func NewStorage(conStringDSN string) (*Storage, error) {
 	if conStringDSN == "" {
-		return nil, nil
+		return nil, fmt.Errorf("%s field: empty", "DSN")
 	}
 
 	conector := pgdriver.NewConnector(pgdriver.WithDSN(conStringDSN))
-	sqlDb := sql.OpenDB(conector)
+	sqlDB := sql.OpenDB(conector)
 
 	st := &Storage{
-		db:           bun.NewDB(sqlDb, pgdialect.New()),
+		db:           bun.NewDB(sqlDB, pgdialect.New()),
 		conStringDSN: conStringDSN,
 	}
 
