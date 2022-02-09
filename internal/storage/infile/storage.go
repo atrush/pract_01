@@ -60,8 +60,8 @@ func (s *Storage) User() storage.UserRepository {
 }
 
 // Read all items from file
-func (f *Storage) initFromFile() error {
-	fileReader, err := newFileReader(f.fileName)
+func (s *Storage) initFromFile() error {
+	fileReader, err := newFileReader(s.fileName)
 	if err != nil {
 		return fmt.Errorf("ошибка чтения из хранилища: %w", err)
 	}
@@ -73,19 +73,19 @@ func (f *Storage) initFromFile() error {
 	}
 
 	//set URL cache
-	f.cache.urlCache = data
+	s.cache.urlCache = data
 
 	if len(data) > 0 {
 		for _, v := range data {
 			//set URL index
-			if f.shortURLRepo.IsAvailableID(v.ShortID) {
-				f.cache.shortURLidx[v.ShortID] = v.ShortID
+			if s.shortURLRepo.IsAvailableID(v.ShortID) {
+				s.cache.shortURLidx[v.ShortID] = v.ShortID
 			}
 
 			//set Users cahe
-			if v.UserID != "" && f.userRepo.IsAvailableUserID(v.UserID) {
-				if _, ok := f.cache.userCache[v.UserID]; !ok {
-					f.cache.userCache[v.UserID] = v.UserID
+			if v.UserID != "" && s.userRepo.IsAvailableUserID(v.UserID) {
+				if _, ok := s.cache.userCache[v.UserID]; !ok {
+					s.cache.userCache[v.UserID] = v.UserID
 				}
 			}
 		}
