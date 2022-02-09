@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/internal/storage/inmemory"
+	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/atrush/pract_01.git/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		outContTypeExpected string
 		outCodeExpected     int
 
-		initFixtures func(storage *inmemory.MapStorage)
+		initFixtures func(storage storage.Storage)
 	}{
 		{
 			name:            "POST empty URL",
@@ -50,8 +51,8 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/",
 			body:            "https://practicum.yandex.ru/",
 			outCodeExpected: 201,
-			initFixtures: func(storage *inmemory.MapStorage) {
-				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
+			initFixtures: func(storage storage.Storage) {
+				storage.URL().SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
 			},
 		},
 		{
@@ -65,8 +66,8 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			method:          http.MethodGet,
 			url:             "/aaaaaa",
 			outCodeExpected: 307,
-			initFixtures: func(storage *inmemory.MapStorage) {
-				storage.SaveURL("aaaaaa", "https://practicum.yandex.ru/", "")
+			initFixtures: func(storage storage.Storage) {
+				storage.URL().SaveURL("aaaaaa", "https://practicum.yandex.ru/", "")
 			},
 		},
 		{
@@ -118,14 +119,15 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			contentType:         "application/json",
 			outCodeExpected:     201,
 			outContTypeExpected: "application/json",
-			initFixtures: func(storage *inmemory.MapStorage) {
-				storage.SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
+			initFixtures: func(storage storage.Storage) {
+				storage.URL().SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db := inmemory.NewStorage()
+			db, err := infile.NewFileStorage("")
+			require.NoError(t, err)
 			if tt.initFixtures != nil {
 				tt.initFixtures(db)
 			}
@@ -169,7 +171,9 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	longURL := "https://practicum.yandex.ru/"
 	longURLHeader := "Location"
 
-	db := inmemory.NewStorage()
+	db, err := infile.NewFileStorage("")
+	require.NoError(t, err)
+
 	userSvc, _ := service.NewUserService(db)
 	svc, _ := service.NewShortURLService(db)
 	handler := Handler{svc: svc, baseURL: cfg.BaseURL}

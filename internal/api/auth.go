@@ -55,7 +55,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (string, error) 
 			return "", err
 		}
 		userID, err := a.crypt.DecodeToken(token)
-		if err == nil {
+		if err == nil && a.svc.UserExist(string(userID)) {
 			return string(userID), nil
 		}
 	}

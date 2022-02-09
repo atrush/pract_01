@@ -10,4 +10,5 @@ type URLShortener interface {
 
 type UserManager interface {
 	AddUser() (string, error)
+	UserExist(userID string) bool
 }

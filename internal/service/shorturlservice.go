@@ -10,10 +10,10 @@ import (
 var _ URLShortener = (*ShortURLService)(nil)
 
 type ShortURLService struct {
-	db storage.URLStorer
+	db storage.Storage
 }
 
-func NewShortURLService(db storage.URLStorer) (*ShortURLService, error) {
+func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}
@@ -24,7 +24,7 @@ func NewShortURLService(db storage.URLStorer) (*ShortURLService, error) {
 }
 
 func (sh *ShortURLService) GetUserURLList(userID string) ([]storage.ShortURL, error) {
-	list, err := sh.db.GetUserURLList(userID)
+	list, err := sh.db.URL().GetUserURLList(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (sh *ShortURLService) GetUserURLList(userID string) ([]storage.ShortURL, er
 }
 
 func (sh *ShortURLService) GetURL(shortID string) (string, error) {
-	longURL, err := sh.db.GetURL(shortID)
+	longURL, err := sh.db.URL().GetURL(shortID)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +47,7 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID string) (string, error)
 		return "", err
 	}
 
-	_, err = sh.db.SaveURL(shortID, string(srcURL), userID)
+	_, err = sh.db.URL().SaveURL(shortID, string(srcURL), userID)
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +66,7 @@ func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
 
 func (sh *ShortURLService) iterShortURLGenerator(srcURL string, iterationCount int, salt string) (string, error) {
 	shortID := GenerateShortLink(srcURL, salt)
-	if !sh.db.IsAvailableID(shortID) {
+	if !sh.db.URL().IsAvailableID(shortID) {
 		iterationCount++
 		salt := uuid.New().String()
 

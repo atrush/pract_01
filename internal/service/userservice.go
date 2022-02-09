@@ -9,7 +9,12 @@ import (
 var _ UserManager = (*UserService)(nil)
 
 type UserService struct {
-	db storage.UserStorer
+	db storage.Storage
+}
+
+func (u *UserService) UserExist(userID string) bool {
+
+	return !u.db.User().IsAvailableUserID(userID)
 }
 
 func (u *UserService) AddUser() (string, error) {
@@ -18,13 +23,14 @@ func (u *UserService) AddUser() (string, error) {
 		return "", err
 	}
 
-	if err := u.db.AddUser(newUserID); err != nil {
+	if err := u.db.User().AddUser(newUserID); err != nil {
 		return "", err
 	}
+
 	return newUserID, nil
 }
 
-func NewUserService(db storage.UserStorer) (*UserService, error) {
+func NewUserService(db storage.Storage) (*UserService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}
@@ -48,7 +54,7 @@ func (u *UserService) iterUserIDGenerator(iterationCount int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !u.db.IsAvailableUserID(userID) {
+	if !u.db.User().IsAvailableUserID(userID) {
 		iterationCount++
 
 		userID, err := u.iterUserIDGenerator(iterationCount)
