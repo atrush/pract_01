@@ -47,12 +47,18 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID string) (string, error)
 		return "", err
 	}
 
-	_, err = sh.db.URL().SaveURL(shortID, string(srcURL), userID)
-	if err != nil {
+	sht := storage.ShortURL{
+		ID:      uuid.New(),
+		ShortID: shortID,
+		UserID:  userID,
+		URL:     srcURL,
+	}
+
+	if err = sh.db.URL().SaveURL(&sht); err != nil {
 		return "", err
 	}
 
-	return shortID, nil
+	return sht.ShortID, nil
 }
 
 func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {

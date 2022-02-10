@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/atrush/pract_01.git/internal/storage"
+	_ "github.com/google/uuid"
 )
 
 var _ storage.Storage = (*Storage)(nil)
@@ -79,7 +80,7 @@ func (s *Storage) initFromFile() error {
 		for _, v := range data {
 			//set URL index
 			if s.shortURLRepo.IsAvailableID(v.ShortID) {
-				s.cache.shortURLidx[v.ShortID] = v.ShortID
+				s.cache.shortURLidx[v.ShortID] = v.ID
 			}
 
 			//set Users cahe

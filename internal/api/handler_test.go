@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/internal/storage"
+	st "github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
+
 	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/atrush/pract_01.git/pkg"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +31,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		outContTypeExpected string
 		outCodeExpected     int
 
-		initFixtures func(storage storage.Storage)
+		initFixtures func(storage st.Storage)
 	}{
 		{
 			name:            "POST empty URL",
@@ -51,8 +53,12 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/",
 			body:            "https://practicum.yandex.ru/",
 			outCodeExpected: 201,
-			initFixtures: func(storage storage.Storage) {
-				storage.URL().SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
+			initFixtures: func(storage st.Storage) {
+				storage.URL().SaveURL(&st.ShortURL{
+					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID: "1xQ6p+JI",
+					URL:     "https://practicum.yandex.ru/",
+					UserID:  ""})
 			},
 		},
 		{
@@ -64,10 +70,14 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		{
 			name:            "GET exist URL",
 			method:          http.MethodGet,
-			url:             "/aaaaaa",
+			url:             "/1xQ6p+JI",
 			outCodeExpected: 307,
-			initFixtures: func(storage storage.Storage) {
-				storage.URL().SaveURL("aaaaaa", "https://practicum.yandex.ru/", "")
+			initFixtures: func(storage st.Storage) {
+				storage.URL().SaveURL(&st.ShortURL{
+					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID: "1xQ6p+JI",
+					URL:     "https://practicum.yandex.ru/",
+					UserID:  ""})
 			},
 		},
 		{
@@ -103,7 +113,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			outCodeExpected: 400,
 		},
 		{
-			name:                "POST JSON URL",
+			name:                "POST JSON URL empty storage",
 			method:              http.MethodPost,
 			url:                 "/api/shorten",
 			body:                "{\"url\": \"https://practicum.yandex.ru/\"}",
@@ -112,15 +122,19 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			outContTypeExpected: "application/json",
 		},
 		{
-			name:                "POST JSON URL",
+			name:                "POST JSON URL not empty storage",
 			method:              http.MethodPost,
 			url:                 "/api/shorten",
 			body:                "{\"url\": \"https://practicum.yandex.ru/\"}",
 			contentType:         "application/json",
 			outCodeExpected:     201,
 			outContTypeExpected: "application/json",
-			initFixtures: func(storage storage.Storage) {
-				storage.URL().SaveURL("wdwfff", "https://practicum.yandex.ru/", "")
+			initFixtures: func(storage st.Storage) {
+				storage.URL().SaveURL(&st.ShortURL{
+					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID: "1xQ6p+JI",
+					URL:     "https://yandex.ru/",
+					UserID:  ""})
 			},
 		},
 	}
@@ -134,9 +148,9 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 
 			svc, _ := service.NewShortURLService(db)
 			userSvc, _ := service.NewUserService(db)
-			h := &Handler{svc: svc}
+			h := Handler{svc: svc}
 			a := NewAuth(userSvc)
-			r := NewRouter(*h, *a)
+			r := NewRouter(h, *a)
 
 			request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
 			if tt.contentType != "" {

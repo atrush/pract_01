@@ -29,38 +29,34 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 }
 
 //Save URL
-func (r *shortURLRepository) SaveURL(shortID string, srcURL string, userID string) (string, error) {
-	if shortID == "" {
-		return "", errors.New("нельзя использовать id")
+func (r *shortURLRepository) SaveURL(sht *storage.ShortURL) error {
+	if sht.ShortID == "" {
+		return errors.New("нельзя использовать id")
 	}
-	if srcURL == "" {
-		return "", errors.New("нельзя сохранить пустое значение")
+	if sht.URL == "" {
+		return errors.New("нельзя сохранить пустое значение")
 	}
-	if !r.IsAvailableID(shortID) {
-		return "", errors.New("shortID уже существует")
+	if !r.IsAvailableID(sht.ShortID) {
+		return errors.New("shortID уже существует")
 	}
 
-	_, userExist := r.cache.userCache[userID]
-	if userID != "" && !userExist {
-		return "", errors.New("пользователь не найден")
+	_, userExist := r.cache.userCache[sht.UserID]
+	if sht.UserID != "" && !userExist {
+		return errors.New("пользователь не найден")
 	}
 
 	if r.fileName != "" {
 		r.Lock()
-		if err := r.writeToFile(shortID, srcURL, userID); err != nil {
-			return "", err
+		if err := r.writeToFile(*sht); err != nil {
+			return err
 		}
 		defer r.Unlock()
 	}
 
-	r.cache.urlCache[shortID] = storage.ShortURL{
-		ShortID: shortID,
-		URL:     srcURL,
-		UserID:  userID,
-	}
-	r.cache.shortURLidx[shortID] = shortID
+	r.cache.urlCache[sht.ID] = *sht
+	r.cache.shortURLidx[sht.ShortID] = sht.ID
 
-	return shortID, nil
+	return nil
 }
 
 func (r *shortURLRepository) GetURL(shortID string) (string, error) {
@@ -69,12 +65,15 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 	}
 
 	r.RLock()
-	item, ok := r.cache.urlCache[shortID]
+	idx, ok := r.cache.shortURLidx[shortID]
 	if ok {
-		return item.URL, nil
-	}
-	defer r.RUnlock()
 
+		item, ok := r.cache.urlCache[idx]
+		if ok {
+			return item.URL, nil
+		}
+		defer r.RUnlock()
+	}
 	return "", nil
 }
 
@@ -111,14 +110,14 @@ func (r *shortURLRepository) IsAvailableID(shortID string) bool {
 }
 
 // Write item to file
-func (r *shortURLRepository) writeToFile(shortID string, srcURL string, userID string) error {
+func (r *shortURLRepository) writeToFile(sht storage.ShortURL) error {
 	fileWriter, err := newFileWriter(r.fileName)
 	if err != nil {
 		return fmt.Errorf("ошибка записи в хранилище: %w", err)
 	}
 
 	defer fileWriter.Close()
-	if err := fileWriter.WriteURL(shortID, srcURL, userID); err != nil {
+	if err := fileWriter.WriteURL(sht); err != nil {
 		return fmt.Errorf("ошибка записи в хранилище: %w", err)
 	}
 

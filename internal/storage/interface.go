@@ -9,7 +9,7 @@ type Storage interface {
 type URLRepository interface {
 	GetURL(shortID string) (string, error)
 	GetUserURLList(userID string) ([]ShortURL, error)
-	SaveURL(shortID string, srcURL string, userID string) (string, error)
+	SaveURL(*ShortURL) error
 	IsAvailableID(shortID string) bool
 }
 
