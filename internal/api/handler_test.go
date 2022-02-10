@@ -142,22 +142,25 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db, err := infile.NewFileStorage("")
 			require.NoError(t, err)
+
 			if tt.initFixtures != nil {
 				tt.initFixtures(db)
 			}
 
-			svc, _ := service.NewShortURLService(db)
-			userSvc, _ := service.NewUserService(db)
-			h := Handler{svc: svc}
-			a := NewAuth(userSvc)
-			r := NewRouter(h, *a)
+			svc, err := service.NewService(db)
+			require.NoError(t, err)
 
+			h, err := NewHandler(svc, nil, "http://localhost:8080")
+			require.NoError(t, err)
+
+			r := NewRouter(h)
 			request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
+
 			if tt.contentType != "" {
 				request.Header.Set("Content-Type", tt.contentType)
 			}
-			w := httptest.NewRecorder()
 
+			w := httptest.NewRecorder()
 			r.ServeHTTP(w, request)
 
 			res := w.Result()
@@ -188,12 +191,13 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	db, err := infile.NewFileStorage("")
 	require.NoError(t, err)
 
-	userSvc, _ := service.NewUserService(db)
-	svc, _ := service.NewShortURLService(db)
-	handler := Handler{svc: svc, baseURL: cfg.BaseURL}
-	a := NewAuth(userSvc)
-	r := NewRouter(handler, *a)
+	svc, err := service.NewService(db)
+	require.NoError(t, err)
 
+	h, err := NewHandler(svc, nil, "http://localhost:8080")
+	require.NoError(t, err)
+
+	r := NewRouter(h)
 	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
 	request.RemoteAddr = "localhost" + cfg.ServerPort
 	w := httptest.NewRecorder()

@@ -7,7 +7,6 @@ import (
 	"os/signal"
 
 	"github.com/atrush/pract_01.git/internal/api"
-	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/atrush/pract_01.git/pkg"
@@ -25,25 +24,16 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	svc, err := service.NewShortURLService(db)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	userSvc, err := service.NewUserService(db)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
 	psDB, err := getInitPsDB(*cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	defer psDB.Close()
 
-	handler := api.NewHandler(svc, psDB, cfg.BaseURL)
-	auth := api.NewAuth(userSvc)
-	server := api.NewServer(cfg.ServerPort, *handler, *auth)
+	server, err := api.NewServer(cfg, db, psDB)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	log.Fatal(server.Run())
 

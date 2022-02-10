@@ -5,6 +5,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type Servicer interface {
+	URL() URLShortener
+	User() UserManager
+}
+
 type URLShortener interface {
 	GetURL(shortID string) (string, error)
 	GetUserURLList(userID uuid.UUID) ([]st.ShortURL, error)

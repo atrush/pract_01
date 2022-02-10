@@ -14,7 +14,7 @@ type ShortURLService struct {
 }
 
 // Return new URL service
-func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
+func newShortURLService(db storage.Storage) (*ShortURLService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}

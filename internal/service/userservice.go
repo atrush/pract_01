@@ -14,7 +14,7 @@ type UserService struct {
 }
 
 // New user service
-func NewUserService(db storage.Storage) (*UserService, error) {
+func newUserService(db storage.Storage) (*UserService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}

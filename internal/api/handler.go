@@ -12,18 +12,20 @@ import (
 )
 
 type Handler struct {
-	svc     service.URLShortener
+	auth    *Auth
+	svc     service.Servicer
 	psDB    *psql.Storage
 	baseURL string
 }
 
-func NewHandler(svc service.URLShortener, psDB *psql.Storage, baseURL string) *Handler {
-
+// Return new handler
+func NewHandler(svc service.Servicer, psDB *psql.Storage, baseURL string) (*Handler, error) {
 	return &Handler{
 		svc:     svc,
 		psDB:    psDB,
 		baseURL: baseURL,
-	}
+		auth:    NewAuth(svc),
+	}, nil
 }
 
 // Check db connection
@@ -50,7 +52,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlList, err := h.svc.GetUserURLList(userID)
+	urlList, err := h.svc.URL().GetUserURLList(userID)
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -106,7 +108,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.SaveURL(incoming.SrcURL, userID)
+	shortID, err := h.svc.URL().SaveURL(incoming.SrcURL, userID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
@@ -140,7 +142,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.SaveURL(string(srcURL), userID)
+	shortID, err := h.svc.URL().SaveURL(string(srcURL), userID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
@@ -159,7 +161,7 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	longURL, err := h.svc.GetURL(shortID)
+	longURL, err := h.svc.URL().GetURL(shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
@@ -179,8 +181,8 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getUserIDFromContext(r *http.Request) uuid.UUID {
 	ctxID := r.Context().Value(ContextKeyUserID).(string)
 	userUUID, err := uuid.Parse(ctxID)
-	if err != nil {
 
+	if err == nil {
 		return userUUID
 	}
 

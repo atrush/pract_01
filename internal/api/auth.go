@@ -13,7 +13,7 @@ import (
 type (
 	Auth struct {
 		crypt AuthCrypt
-		svc   service.UserManager
+		svc   service.Servicer
 	}
 	contextKey string
 )
@@ -22,7 +22,7 @@ var (
 	ContextKeyUserID = contextKey("user-id")
 )
 
-func NewAuth(svc service.UserManager) *Auth {
+func NewAuth(svc service.Servicer) *Auth {
 	return &Auth{
 		crypt: *NewAuthCrypt(),
 		svc:   svc,
@@ -49,7 +49,7 @@ func (a *Auth) Middleware(next http.Handler) http.Handler {
 func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	if cookie, errCookie := r.Cookie("token"); errCookie == nil {
 		id, err := a.crypt.DecodeToken(cookie.Value)
-		if err == nil && a.svc.Exist(id) {
+		if err == nil && a.svc.User().Exist(id) {
 			return id, nil
 		}
 	}
@@ -73,7 +73,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 
 // Add new user to storage, return UUID and token
 func (a *Auth) newUser() (uuid.UUID, string, error) {
-	newUser, err := a.svc.AddUser()
+	newUser, err := a.svc.User().AddUser()
 	if err == nil {
 		token, err := a.crypt.EncodeUUID(newUser.ID)
 		if err == nil {
