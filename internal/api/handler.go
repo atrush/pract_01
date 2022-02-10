@@ -8,6 +8,7 @@ import (
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -40,8 +41,15 @@ func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Return arr of stored urls for current user
 func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserIDFromContext(r)
+
+	if userID == uuid.Nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	urlList, err := h.svc.GetUserURLList(userID)
 	if err != nil {
 		h.serverError(w, err.Error())
@@ -69,10 +77,10 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
 	w.Write([]byte(jsResult))
 }
 
+// Save URL with JSON request
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {
@@ -117,6 +125,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsResult)
 }
 
+// Save URL with body request
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -142,6 +151,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(h.baseURL + "/" + shortID))
 }
 
+// Return stored URL by short URL
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	shortID := chi.URLParam(r, "shortID")
 	if shortID == "" {
@@ -159,12 +169,22 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		h.notFoundError(w)
 		return
 	}
+
 	w.Header().Set("content-type", "text/plain")
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
-func (h *Handler) getUserIDFromContext(r *http.Request) string {
-	return r.Context().Value(ContextKeyUserID).(string)
+
+// Get user UUID from context
+func (h *Handler) getUserIDFromContext(r *http.Request) uuid.UUID {
+	ctxID := r.Context().Value(ContextKeyUserID).(string)
+	userUUID, err := uuid.Parse(ctxID)
+	if err != nil {
+
+		return userUUID
+	}
+
+	return uuid.Nil
 }
 
 func (h *Handler) serverError(w http.ResponseWriter, errText string) {

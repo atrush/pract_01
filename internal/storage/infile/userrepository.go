@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
 )
 
 var _ storage.UserRepository = (*userRepository)(nil)
@@ -26,25 +27,18 @@ func newUserRepository(c *cache) (*userRepository, error) {
 }
 
 // Check userID exist
-func (r *userRepository) IsAvailableUserID(userID string) bool {
+func (r *userRepository) Exist(userID uuid.UUID) bool {
 	r.RLock()
 	_, ok := r.cache.userCache[userID]
 	defer r.RUnlock()
 
-	return !ok
+	return ok
 }
 
 // Add User
-func (r *userRepository) AddUser(userID string) error {
-	if userID == "" {
-		return errors.New("нельзя использовать пустой id")
-	}
-	if !r.IsAvailableUserID(userID) {
-		return errors.New("id уже существует")
-	}
-
+func (r *userRepository) AddUser(user *storage.User) error {
 	r.Lock()
-	r.cache.userCache[userID] = userID
+	r.cache.userCache[user.ID] = user.ID
 	defer r.Unlock()
 
 	return nil

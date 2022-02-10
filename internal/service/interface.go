@@ -1,14 +1,17 @@
 package service
 
-import "github.com/atrush/pract_01.git/internal/storage"
+import (
+	st "github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
+)
 
 type URLShortener interface {
 	GetURL(shortID string) (string, error)
-	GetUserURLList(userID string) ([]storage.ShortURL, error)
-	SaveURL(srcURL string, userID string) (string, error)
+	GetUserURLList(userID uuid.UUID) ([]st.ShortURL, error)
+	SaveURL(srcURL string, userID uuid.UUID) (string, error)
 }
 
 type UserManager interface {
-	AddUser() (string, error)
-	UserExist(userID string) bool
+	AddUser() (*st.User, error)
+	Exist(id uuid.UUID) bool
 }

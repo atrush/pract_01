@@ -58,7 +58,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://practicum.yandex.ru/",
-					UserID:  ""})
+					UserID:  uuid.Nil})
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://practicum.yandex.ru/",
-					UserID:  ""})
+					UserID:  uuid.Nil})
 			},
 		},
 		{
@@ -134,7 +134,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://yandex.ru/",
-					UserID:  ""})
+					UserID:  uuid.Nil})
 			},
 		},
 	}

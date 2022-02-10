@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/atrush/pract_01.git/internal/storage"
-	_ "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 var _ storage.Storage = (*Storage)(nil)
@@ -84,10 +84,8 @@ func (s *Storage) initFromFile() error {
 			}
 
 			//set Users cahe
-			if v.UserID != "" && s.userRepo.IsAvailableUserID(v.UserID) {
-				if _, ok := s.cache.userCache[v.UserID]; !ok {
-					s.cache.userCache[v.UserID] = v.UserID
-				}
+			if v.UserID != uuid.Nil && !s.userRepo.Exist(v.UserID) {
+				s.cache.userCache[v.UserID] = v.UserID
 			}
 		}
 	}

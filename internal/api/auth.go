@@ -2,18 +2,17 @@ package api
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/pkg"
+	"github.com/google/uuid"
 )
 
 type (
 	Auth struct {
-		crypt pkg.Crypt
+		crypt AuthCrypt
 		svc   service.UserManager
 	}
 	contextKey string
@@ -25,7 +24,7 @@ var (
 
 func NewAuth(svc service.UserManager) *Auth {
 	return &Auth{
-		crypt: *pkg.NewCrypt(),
+		crypt: *NewAuthCrypt(),
 		svc:   svc,
 	}
 }
@@ -39,30 +38,25 @@ func (a *Auth) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ContextKeyUserID, string(userID))
+		ctx := context.WithValue(r.Context(), ContextKeyUserID, userID.String())
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (string, error) {
+// Read uuid from cookie token. If ok and user exist set ctx, else generate new user and set cookie
+func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	if cookie, errCookie := r.Cookie("token"); errCookie == nil {
-
-		token := make([]byte, hex.DecodedLen(len(cookie.Value)))
-		_, err := hex.Decode(token, []byte(cookie.Value))
-		if err != nil {
-			return "", err
-		}
-		userID, err := a.crypt.DecodeToken(token)
-		if err == nil && a.svc.UserExist(string(userID)) {
-			return string(userID), nil
+		id, err := a.crypt.DecodeToken(cookie.Value)
+		if err == nil && a.svc.Exist(id) {
+			return id, nil
 		}
 	}
 
-	newUserID, newUserToken, err := a.newUser()
+	newUserUUID, newUserToken, err := a.newUser()
 	if err != nil {
-		return "", fmt.Errorf("ошибка гнерации нового пользователя: %w", err)
+		return uuid.Nil, fmt.Errorf("ошибка гнерации нового пользователя: %w", err)
 	}
 
 	newCookie := http.Cookie{
@@ -74,19 +68,19 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (string, error) 
 	}
 	http.SetCookie(w, &newCookie)
 
-	return newUserID, nil
+	return newUserUUID, nil
 }
 
-func (a *Auth) newUser() (string, string, error) {
-	newUserID, err := a.svc.AddUser()
-	if err != nil {
-		return "", "", err
+// Add new user to storage, return UUID and token
+func (a *Auth) newUser() (uuid.UUID, string, error) {
+	newUser, err := a.svc.AddUser()
+	if err == nil {
+		token, err := a.crypt.EncodeUUID(newUser.ID)
+		if err == nil {
+
+			return newUser.ID, string(token), nil
+		}
 	}
 
-	newToken, err := a.crypt.EncodeToken(newUserID)
-	if err != nil {
-		return "", "", err
-	}
-
-	return newUserID, string(service.ToHEX(newToken)), nil
+	return uuid.Nil, "", err
 }

@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
 )
 
 var _ storage.URLRepository = (*shortURLRepository)(nil)
@@ -41,7 +42,7 @@ func (r *shortURLRepository) SaveURL(sht *storage.ShortURL) error {
 	}
 
 	_, userExist := r.cache.userCache[sht.UserID]
-	if sht.UserID != "" && !userExist {
+	if sht.UserID != uuid.Nil && !userExist {
 		return errors.New("пользователь не найден")
 	}
 
@@ -59,6 +60,7 @@ func (r *shortURLRepository) SaveURL(sht *storage.ShortURL) error {
 	return nil
 }
 
+// Return stored URL by shortID
 func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 	if shortID == "" {
 		return "", errors.New("нельзя использовать пустой id")
@@ -78,18 +80,14 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 }
 
 // Get array of URL for user
-func (r *shortURLRepository) GetUserURLList(userID string) ([]storage.ShortURL, error) {
-	if userID == "" {
-		return nil, errors.New("нельзя использовать пустой id")
-	}
-
+func (r *shortURLRepository) GetUserURLList(userID uuid.UUID) ([]storage.ShortURL, error) {
 	if len(r.cache.urlCache) == 0 {
 		return nil, nil
 	}
 
 	userURLs := make([]storage.ShortURL, 0, len(r.cache.urlCache))
 	for _, v := range r.cache.urlCache {
-		if v.UserID == userID {
+		if v.UserID != uuid.Nil && v.UserID == userID {
 			userURLs = append(userURLs, v)
 		}
 	}
@@ -101,6 +99,7 @@ func (r *shortURLRepository) GetUserURLList(userID string) ([]storage.ShortURL, 
 	return userURLs, nil
 }
 
+// Check shortID not exist
 func (r *shortURLRepository) IsAvailableID(shortID string) bool {
 	r.RLock()
 	_, ok := r.cache.shortURLidx[shortID]

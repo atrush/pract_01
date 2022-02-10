@@ -1,5 +1,9 @@
 package storage
 
+import (
+	"github.com/google/uuid"
+)
+
 type Storage interface {
 	URL() URLRepository
 	User() UserRepository
@@ -8,12 +12,12 @@ type Storage interface {
 
 type URLRepository interface {
 	GetURL(shortID string) (string, error)
-	GetUserURLList(userID string) ([]ShortURL, error)
+	GetUserURLList(userID uuid.UUID) ([]ShortURL, error)
 	SaveURL(*ShortURL) error
 	IsAvailableID(shortID string) bool
 }
 
 type UserRepository interface {
-	AddUser(userID string) error
-	IsAvailableUserID(userID string) bool
+	AddUser(*User) error
+	Exist(userID uuid.UUID) bool
 }

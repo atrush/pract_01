@@ -13,6 +13,7 @@ type ShortURLService struct {
 	db storage.Storage
 }
 
+// Return new URL service
 func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
@@ -23,7 +24,8 @@ func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	}, nil
 }
 
-func (sh *ShortURLService) GetUserURLList(userID string) ([]storage.ShortURL, error) {
+// Return array stored URLs by user UUID
+func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]storage.ShortURL, error) {
 	list, err := sh.db.URL().GetUserURLList(userID)
 	if err != nil {
 		return nil, err
@@ -32,6 +34,7 @@ func (sh *ShortURLService) GetUserURLList(userID string) ([]storage.ShortURL, er
 	return list, nil
 }
 
+// Return stored URL by shortID
 func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 	longURL, err := sh.db.URL().GetURL(shortID)
 	if err != nil {
@@ -41,7 +44,8 @@ func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 	return longURL, nil
 }
 
-func (sh *ShortURLService) SaveURL(srcURL string, userID string) (string, error) {
+// Save URL for user, return shortID
+func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, error) {
 	shortID, err := sh.genShortURL(string(srcURL))
 	if err != nil {
 		return "", err
@@ -61,6 +65,7 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID string) (string, error)
 	return sht.ShortID, nil
 }
 
+// Generate unique ShortID
 func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
 	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, "")
 	if err != nil {
@@ -70,14 +75,16 @@ func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
 	return shortID, nil
 }
 
+// Iter gen shortID, if exist try one more time, if maxIterate times throw error
 func (sh *ShortURLService) iterShortURLGenerator(srcURL string, iterationCount int, salt string) (string, error) {
+	maxIterate := 10
 	shortID := GenerateShortLink(srcURL, salt)
 	if !sh.db.URL().IsAvailableID(shortID) {
 		iterationCount++
 		salt := uuid.New().String()
 
 		shortID, err := sh.iterShortURLGenerator(srcURL, iterationCount, salt)
-		if err != nil || iterationCount > 10 {
+		if err != nil || iterationCount > maxIterate {
 			return "", errors.New("ошибка генерации короткой ссылки")
 		}
 
