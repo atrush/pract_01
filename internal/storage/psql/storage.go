@@ -69,12 +69,12 @@ func (s *Storage) User() storage.UserRepository {
 }
 
 // Check DB connection.
-func (st *Storage) Ping() error {
-	if st == nil || st.db == nil {
+func (s *Storage) Ping() error {
+	if s == nil || s.db == nil {
 		return errors.New("db not initialized")
 	}
 
-	if err := st.db.Ping(); err != nil {
+	if err := s.db.Ping(); err != nil {
 		return fmt.Errorf("ping for DSN (%s) failed: %w", st.conStringDSN, err)
 	}
 
@@ -82,8 +82,8 @@ func (st *Storage) Ping() error {
 }
 
 // Close DB connection.
-func (st Storage) Close() {
-	st.db.Close()
+func (s Storage) Close() {
+	s.db.Close()
 }
 
 // Set migrations to db

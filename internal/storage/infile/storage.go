@@ -97,7 +97,7 @@ func (s *Storage) initFromFile() error {
 }
 
 // Check DB connection.
-func (st *Storage) Ping() error {
+func (s *Storage) Ping() error {
 	return errors.New("db not initialized")
 }
 

@@ -51,7 +51,12 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if urlList == nil || (urlList != nil && len(urlList) == 0) {
+	if urlList == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if urlList != nil && len(urlList) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
