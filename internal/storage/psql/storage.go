@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/atrush/pract_01.git/internal/storage"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
@@ -41,8 +39,10 @@ func NewStorage(conStringDSN string, migrationsPath string) (*Storage, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-
-	initMigrations(db, migrationsPath)
+	if err := initBase(db); err != nil {
+		return nil, err
+	}
+	//initMigrations(db, migrationsPath)
 
 	st := &Storage{
 		db:           db,
@@ -86,21 +86,42 @@ func (s Storage) Close() {
 	s.db.Close()
 }
 
-// Set migrations to db
-func initMigrations(db *sql.DB, migrationsPath string) error {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+func initBase(db *sql.DB) error {
+	db.Exec("DROP SCHEMA public CASCADE;CREATE SCHEMA public;")
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS users (" +
+		"		id uuid not null,						" +
+		"		primary key (id));" +
+		"	CREATE TABLE IF NOT EXISTS urls(" +
+		"		id uuid not null," +
+		"		user_id uuid not null," +
+		"		srcurl varchar(2050) not null," +
+		"		shorturl varchar (16) not null," +
+		"		unique (shorturl)," +
+		"		primary key (id)," +
+		"		foreign key (user_id) references users (id)" +
+		"	);")
 	if err != nil {
-		return fmt.Errorf("ошибка миграции бд:%w", err)
+		return err
 	}
-
-	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
-	if err != nil {
-		return fmt.Errorf("ошибка миграции бд:%w", err)
-	}
-
-	if err = m.Up(); err != nil {
-		return fmt.Errorf("ошибка миграции бд:%w", err)
-	}
-
 	return nil
+
 }
+
+// // Set migrations to db
+// func initMigrations(db *sql.DB, migrationsPath string) error {
+// 	driver, err := postgres.WithInstance(db, &postgres.Config{})
+// 	if err != nil {
+// 		return fmt.Errorf("ошибка миграции бд:%w", err)
+// 	}
+
+// 	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
+// 	if err != nil {
+// 		return fmt.Errorf("ошибка миграции бд:%w", err)
+// 	}
+
+// 	if err = m.Up(); err != nil {
+// 		return fmt.Errorf("ошибка миграции бд:%w", err)
+// 	}
+
+// 	return nil
+// }

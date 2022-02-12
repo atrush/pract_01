@@ -13,23 +13,23 @@ const (
 	migrationsPath = "file://migrations"
 )
 
-type TestStorage struct {
+type TstStorage struct {
 	Storage
 }
 
 // Test storage
-func NewTestStorage() (*TestStorage, error) {
+func NewTestStorage() (*TstStorage, error) {
 
 	storage, err := NewStorage(databaseURL, migrationsPath)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициации тестовой бд:%w", err)
 	}
 
-	return &TestStorage{Storage: *storage}, nil
+	return &TstStorage{Storage: *storage}, nil
 }
 
 // Clear db
-func (t *TestStorage) DropAll() {
+func (t *TstStorage) DropAll() {
 	_, err := t.db.Exec("DROP SCHEMA public CASCADE;CREATE SCHEMA public;")
 
 	if err != nil {
