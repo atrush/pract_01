@@ -19,6 +19,16 @@ type (
 		ShortURL string `json:"short_url"`
 		SrcURL   string `json:"original_url"`
 	}
+
+	BatchRequest struct {
+		ID  string `json:"correlation_id"`
+		URL string `json:"original_url"`
+	}
+
+	BatchResponse struct {
+		ID       string `json:"correlation_id"`
+		ShortURL string `json:"short_url"`
+	}
 )
 
 func (s *ShortenRequest) Validate() error {

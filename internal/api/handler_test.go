@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,14 +11,67 @@ import (
 
 	"github.com/atrush/pract_01.git/internal/service"
 	st "github.com/atrush/pract_01.git/internal/storage"
-
 	"github.com/atrush/pract_01.git/internal/storage/infile"
+	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/atrush/pract_01.git/pkg"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestHandler_ShortenBatch(t *testing.T) {
+
+	tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable")
+	require.NoError(t, err)
+
+	defer tstSt.Close()
+	defer tstSt.DropAll()
+
+	svc, err := service.NewService(tstSt)
+	require.NoError(t, err)
+
+	h, err := NewHandler(svc, "http://localhost:8080")
+	require.NoError(t, err)
+
+	r := NewRouter(h)
+
+	arrTst := make([]BatchRequest, 0, 500)
+	for i := 0; i < 500; i++ {
+		id := uuid.New().String()
+		arrTst = append(arrTst, BatchRequest{
+			ID:  uuid.New().String(),
+			URL: "http://localhost:8080/" + id,
+		})
+	}
+
+	buf := new(bytes.Buffer)
+
+	assert.NoError(t, json.NewEncoder(buf).Encode(&arrTst))
+
+	request := httptest.NewRequest("POST", "/api/shorten/batch", buf)
+
+	request.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, request)
+
+	res := w.Result()
+	arrResp := make([]BatchResponse, 0, 500)
+	assert.NoError(t, json.NewDecoder(res.Body).Decode(&arrResp))
+
+	found := 0
+	for _, tstEl := range arrTst {
+		for _, respEl := range arrResp {
+			if tstEl.ID == respEl.ID {
+				found++
+				continue
+			}
+		}
+	}
+	require.Equal(t, found, len(arrTst), "в полученных ссылках не найдено %v ссылок", len(arrTst)-found)
+
+}
 
 func TestHandler_SaveURLHandler(t *testing.T) {
 	tests := []struct {

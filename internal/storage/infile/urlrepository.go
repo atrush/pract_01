@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/atrush/pract_01.git/internal/storage"
+	st "github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
 )
 
-var _ storage.URLRepository = (*shortURLRepository)(nil)
+var _ st.URLRepository = (*shortURLRepository)(nil)
 
 type shortURLRepository struct {
 	cache    cache
@@ -29,8 +29,17 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 	}, nil
 }
 
+func (r *shortURLRepository) SaveURLBuff(sht *st.ShortURL) error {
+	return r.SaveURL(sht)
+}
+
+// Empty imitate flush
+func (r *shortURLRepository) SaveURLBuffFlush() error {
+	return nil
+}
+
 // Save URL
-func (r *shortURLRepository) SaveURL(sht *storage.ShortURL) error {
+func (r *shortURLRepository) SaveURL(sht *st.ShortURL) error {
 	if err := sht.Validate(); err != nil {
 		return err
 	}
@@ -79,12 +88,12 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 }
 
 // Get array of URL for user
-func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]storage.ShortURL, error) {
+func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]st.ShortURL, error) {
 	if len(r.cache.urlCache) == 0 {
 		return nil, nil
 	}
 
-	userURLs := make([]storage.ShortURL, 0, limit)
+	userURLs := make([]st.ShortURL, 0, limit)
 	for _, v := range r.cache.urlCache {
 		if v.UserID != uuid.Nil && v.UserID == userID {
 			userURLs = append(userURLs, v)
@@ -111,7 +120,7 @@ func (r *shortURLRepository) Exist(shortID string) (bool, error) {
 }
 
 // Write item to file
-func (r *shortURLRepository) writeToFile(sht storage.ShortURL) error {
+func (r *shortURLRepository) writeToFile(sht st.ShortURL) error {
 	fileWriter, err := newFileWriter(r.fileName)
 	if err != nil {
 		return fmt.Errorf("ошибка записи в хранилище: %w", err)

@@ -15,6 +15,7 @@ type URLShortener interface {
 	GetURL(shortID string) (string, error)
 	GetUserURLList(userID uuid.UUID) ([]st.ShortURL, error)
 	SaveURL(srcURL string, userID uuid.UUID) (string, error)
+	SaveURLList(srcArr map[string]string, userID uuid.UUID) error
 }
 
 type UserManager interface {

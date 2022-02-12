@@ -15,6 +15,8 @@ type URLRepository interface {
 	GetURL(shortID string) (string, error)
 	GetUserURLList(userID uuid.UUID, limit int) ([]ShortURL, error)
 	SaveURL(*ShortURL) error
+	SaveURLBuff(*ShortURL) error
+	SaveURLBuffFlush() error
 	Exist(shortID string) (bool, error)
 }
 

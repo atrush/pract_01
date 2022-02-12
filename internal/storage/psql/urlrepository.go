@@ -2,6 +2,7 @@ package psql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -12,14 +13,60 @@ import (
 var _ st.URLRepository = (*shortURLRepository)(nil)
 
 type shortURLRepository struct {
-	db *sql.DB
+	db        *sql.DB
+	urlbuffer []st.ShortURL
 }
 
 // New postgress URL repository
 func newShortURLRepository(db *sql.DB) *shortURLRepository {
 	return &shortURLRepository{
-		db: db,
+		db:        db,
+		urlbuffer: make([]st.ShortURL, 0, 100),
 	}
+}
+
+// Save ShortURL using buffer
+func (r *shortURLRepository) SaveURLBuff(sht *st.ShortURL) error {
+	r.urlbuffer = append(r.urlbuffer, *sht)
+
+	if cap(r.urlbuffer) == len(r.urlbuffer) {
+		err := r.SaveURLBuffFlush()
+		if err != nil {
+			return fmt.Errorf("ошибка хранилица:%w", err)
+		}
+	}
+	return nil
+}
+
+// Save ShorURLs stored in bufferr to db
+func (r *shortURLRepository) SaveURLBuffFlush() error {
+	if r.db == nil {
+		return errors.New("ошибка транзакции сохранения: база не инициирована")
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+
+	}
+	stmt, err := tx.Prepare("INSERT INTO urls(id, user_id, srcurl, shorturl) VALUES($1, $2, $3, $4)RETURNING id")
+	if err != nil {
+		return err
+	}
+
+	for _, sht := range r.urlbuffer {
+		if stmt.QueryRow(sht.ID, sht.UserID, sht.URL, sht.ShortID).Scan(&sht.ID); err != nil {
+			if err = tx.Rollback(); err != nil {
+				return fmt.Errorf("ошибка транзакции сохранения: транзакцию не удалось отменить:%w", err)
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("ошибка транзакции сохранения:%w", err)
+	}
+
+	r.urlbuffer = r.urlbuffer[:0]
+	return nil
 }
 
 // Save URL to db

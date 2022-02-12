@@ -36,6 +36,60 @@ func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Save batch of URLs
+func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
+	ct := r.Header.Get("Content-Type")
+
+	if ct != "application/json" {
+		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
+		return
+	}
+
+	//read batch
+	var batch []BatchRequest
+	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	defer r.Body.Close()
+
+	//make map id[url] to add
+	listToAdd := make(map[string]string, len(batch))
+	for _, batchEl := range batch {
+		if _, exist := listToAdd[batchEl.ID]; exist {
+			h.badRequestError(w, "в переданном массиве есть повторяющиеся идентифиакторы")
+
+			return
+		}
+		listToAdd[batchEl.ID] = batchEl.URL
+	}
+
+	userID := h.getUserIDFromContext(r)
+
+	//save mp to db, values in map updates to shortURL
+	if err := h.svc.URL().SaveURLList(listToAdd, userID); err != nil {
+		h.serverError(w, err.Error())
+
+		return
+	}
+
+	//make response arr
+	var respArr []BatchResponse
+	for k, v := range listToAdd {
+		respArr = append(respArr, BatchResponse{
+			ID:       k,
+			ShortURL: h.baseURL + "/" + v,
+		})
+	}
+
+	//serialize
+	json.NewEncoder(w).Encode(&respArr)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+}
+
 // Return arr of stored urls for current user
 func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserIDFromContext(r)
