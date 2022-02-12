@@ -22,13 +22,9 @@ type (
 )
 
 // Create a new Storage.
-func NewStorage(conStringDSN string, migrationsPath string) (*Storage, error) {
+func NewStorage(conStringDSN string) (*Storage, error) {
 	if conStringDSN == "" {
 		return nil, fmt.Errorf("ошибка инициализации бд:%v", "строка соединения с бд пуста")
-	}
-
-	if migrationsPath == "" {
-		return nil, fmt.Errorf("ошибка инициализации бд:%v", "путь к папке миграций пуст")
 	}
 
 	db, err := sql.Open("postgres", conStringDSN)
@@ -106,22 +102,3 @@ func initBase(db *sql.DB) error {
 	return nil
 
 }
-
-// // Set migrations to db
-// func initMigrations(db *sql.DB, migrationsPath string) error {
-// 	driver, err := postgres.WithInstance(db, &postgres.Config{})
-// 	if err != nil {
-// 		return fmt.Errorf("ошибка миграции бд:%w", err)
-// 	}
-
-// 	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
-// 	if err != nil {
-// 		return fmt.Errorf("ошибка миграции бд:%w", err)
-// 	}
-
-// 	if err = m.Up(); err != nil {
-// 		return fmt.Errorf("ошибка миграции бд:%w", err)
-// 	}
-
-// 	return nil
-// }

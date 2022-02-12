@@ -46,7 +46,7 @@ func main() {
 func getDB(cfg pkg.Config) (storage.Storage, error) {
 	//postgress storage
 	if cfg.DatabaseDSN != "" {
-		db, err := psql.NewStorage(cfg.DatabaseDSN, "file://../../internal/storage/psql/migrations")
+		db, err := psql.NewStorage(cfg.DatabaseDSN)
 		if err != nil {
 			return nil, err
 		}

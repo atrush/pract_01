@@ -8,11 +8,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	//databaseURL    = "postgres://postgres:hjvfirb@localhost:5432/tst?sslmode=disable"
-	migrationsPath = "file://migrations"
-)
-
 type TstStorage struct {
 	Storage
 }
@@ -20,7 +15,7 @@ type TstStorage struct {
 // Test storage
 func NewTestStorage(databaseURL string) (*TstStorage, error) {
 
-	storage, err := NewStorage(databaseURL, migrationsPath)
+	storage, err := NewStorage(databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициации тестовой бд:%w", err)
 	}
