@@ -75,7 +75,7 @@ func (s *Storage) Ping() error {
 	}
 
 	if err := s.db.Ping(); err != nil {
-		return fmt.Errorf("ping for DSN (%s) failed: %w", st.conStringDSN, err)
+		return fmt.Errorf("ping for DSN (%s) failed: %w", s.conStringDSN, err)
 	}
 
 	return nil
