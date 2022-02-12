@@ -16,11 +16,8 @@ func TestRepoSaveAndCheckUser(t *testing.T) {
 
 	cfg, err := pkg.NewConfig()
 	require.NoError(t, err)
-	if cfg.TestBase == "" {
-		return
-	}
 
-	tstSt, err := NewTestStorage()
+	tstSt, err := NewTestStorage(cfg.DatabaseDSN)
 	require.NoError(t, err)
 
 	defer tstSt.Close()
@@ -40,11 +37,8 @@ func TestRepoSaveAndCheckUser(t *testing.T) {
 func TestRepoSaveAndGetURL(t *testing.T) {
 	cfg, err := pkg.NewConfig()
 	require.NoError(t, err)
-	if cfg.TestBase == "" {
-		return
-	}
 
-	tstSt, err := NewTestStorage()
+	tstSt, err := NewTestStorage(cfg.DatabaseDSN)
 	require.NoError(t, err)
 
 	defer tstSt.Close()
@@ -76,11 +70,8 @@ func TestRepoSaveAndGetURL(t *testing.T) {
 func TestRepoSaveAndGetUserURLarray(t *testing.T) {
 	cfg, err := pkg.NewConfig()
 	require.NoError(t, err)
-	if cfg.TestBase == "" {
-		return
-	}
 
-	tstSt, err := NewTestStorage()
+	tstSt, err := NewTestStorage(cfg.DatabaseDSN)
 	require.NoError(t, err)
 
 	defer tstSt.Close()

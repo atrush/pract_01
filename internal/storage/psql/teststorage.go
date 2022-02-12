@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	databaseURL    = "postgres://postgres:hjvfirb@localhost:5432/tst?sslmode=disable"
+	//databaseURL    = "postgres://postgres:hjvfirb@localhost:5432/tst?sslmode=disable"
 	migrationsPath = "file://migrations"
 )
 
@@ -18,7 +18,7 @@ type TstStorage struct {
 }
 
 // Test storage
-func NewTestStorage() (*TstStorage, error) {
+func NewTestStorage(databaseURL string) (*TstStorage, error) {
 
 	storage, err := NewStorage(databaseURL, migrationsPath)
 	if err != nil {
