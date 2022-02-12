@@ -9,10 +9,13 @@ import (
 )
 
 type Config struct {
-	ServerPort      string `env:"SERVER_ADDRESS" validate:"required,hostname_port"`
-	BaseURL         string `env:"BASE_URL" validate:"required,url"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" validate:"-"`
-	DatabaseDSN     string `env:"DATABASE_DSN" validate:"-"`
+	ServerPort             string `env:"SERVER_ADDRESS" validate:"required,hostname_port"`
+	BaseURL                string `env:"BASE_URL" validate:"required,url"`
+	FileStoragePath        string `env:"FILE_STORAGE_PATH" validate:"-"`
+	DatabaseDSN            string `env:"DATABASE_DSN" validate:"-"`
+	DatabaseMigrationsPath string
+
+	TestBase string `env:"TEST_BASE" validate:"-"`
 }
 
 const (
@@ -20,6 +23,8 @@ const (
 	defBaseURL     = "http://localhost:8080"
 	defFileStorage = ""
 	defDatabaseDSN = ""
+
+	testBase = false
 )
 
 func NewConfig() (*Config, error) {
@@ -38,7 +43,6 @@ func (c *Config) readFlagConfig() {
 	flag.StringVar(&c.BaseURL, "b", defBaseURL, "базовый URL для сокращенных ссылок <http://localhost:port>")
 	flag.StringVar(&c.FileStoragePath, "f", defFileStorage, "путь до файла с сокращёнными URL")
 	flag.StringVar(&c.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
-
 	flag.Parse()
 }
 
@@ -60,6 +64,9 @@ func (c *Config) readEnvConfig() error {
 	}
 	if envConfig.DatabaseDSN != "" {
 		c.DatabaseDSN = envConfig.DatabaseDSN
+	}
+	if envConfig.TestBase != "" {
+		c.TestBase = envConfig.TestBase
 	}
 
 	return nil

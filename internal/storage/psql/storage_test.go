@@ -7,11 +7,19 @@ import (
 	"github.com/google/uuid"
 
 	st "github.com/atrush/pract_01.git/internal/storage"
+	"github.com/atrush/pract_01.git/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRepoSaveAndCheckUser(t *testing.T) {
+
+	cfg, err := pkg.NewConfig()
+	require.NoError(t, err)
+	if cfg.TestBase == "" {
+		return
+	}
+
 	tstSt, err := NewTestStorage()
 	require.NoError(t, err)
 
@@ -30,6 +38,12 @@ func TestRepoSaveAndCheckUser(t *testing.T) {
 }
 
 func TestRepoSaveAndGetURL(t *testing.T) {
+	cfg, err := pkg.NewConfig()
+	require.NoError(t, err)
+	if cfg.TestBase == "" {
+		return
+	}
+
 	tstSt, err := NewTestStorage()
 	require.NoError(t, err)
 
@@ -60,6 +74,12 @@ func TestRepoSaveAndGetURL(t *testing.T) {
 }
 
 func TestRepoSaveAndGetUserURLarray(t *testing.T) {
+	cfg, err := pkg.NewConfig()
+	require.NoError(t, err)
+	if cfg.TestBase == "" {
+		return
+	}
+
 	tstSt, err := NewTestStorage()
 	require.NoError(t, err)
 
