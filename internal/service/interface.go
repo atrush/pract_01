@@ -8,6 +8,7 @@ import (
 type Servicer interface {
 	URL() URLShortener
 	User() UserManager
+	Ping() error
 }
 
 type URLShortener interface {
@@ -18,5 +19,5 @@ type URLShortener interface {
 
 type UserManager interface {
 	AddUser() (*st.User, error)
-	Exist(id uuid.UUID) bool
+	Exist(id uuid.UUID) (bool, error)
 }

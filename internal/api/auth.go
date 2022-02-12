@@ -29,12 +29,13 @@ func NewAuth(svc service.Servicer) *Auth {
 	}
 }
 
+// Return auth middleware
 func (a *Auth) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		userID, err := a.authUser(w, r)
 		if err != nil {
-			http.Error(w, "Ошибка установки ключа пользователя: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -48,15 +49,26 @@ func (a *Auth) Middleware(next http.Handler) http.Handler {
 // Read uuid from cookie token. If ok and user exist set ctx, else generate new user and set cookie
 func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	if cookie, errCookie := r.Cookie("token"); errCookie == nil {
+		//decode token
 		id, err := a.crypt.DecodeToken(cookie.Value)
-		if err == nil && a.svc.User().Exist(id) {
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
+		}
+
+		//check user
+		exist, err := a.svc.User().Exist(id)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
+		}
+
+		if exist {
 			return id, nil
 		}
 	}
 
 	newUserUUID, newUserToken, err := a.newUser()
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("ошибка гнерации нового пользователя: %w", err)
+		return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
 	}
 
 	newCookie := http.Cookie{
@@ -82,5 +94,5 @@ func (a *Auth) newUser() (uuid.UUID, string, error) {
 		}
 	}
 
-	return uuid.Nil, "", err
+	return uuid.Nil, "", fmt.Errorf("ошибка гнерации нового пользователя: %w", err)
 }

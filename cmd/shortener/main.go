@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/atrush/pract_01.git/internal/api"
+	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/atrush/pract_01.git/pkg"
@@ -19,18 +20,13 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	db, err := infile.NewFileStorage(cfg.FileStoragePath)
+	db, err := getDB(*cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	defer db.Close()
 
-	psDB, err := getInitPsDB(*cfg)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	defer psDB.Close()
-
-	server, err := api.NewServer(cfg, db, psDB)
+	server, err := api.NewServer(cfg, db)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -46,9 +42,11 @@ func main() {
 	}
 }
 
-func getInitPsDB(cfg pkg.Config) (*psql.Storage, error) {
+//return initialized storage
+func getDB(cfg pkg.Config) (storage.Storage, error) {
+	//postgress storage
 	if cfg.DatabaseDSN != "" {
-		db, err := psql.NewStorage(cfg.DatabaseDSN)
+		db, err := psql.NewStorage(cfg.DatabaseDSN, "file://../../internal/storage/psql/migrations")
 		if err != nil {
 			return nil, err
 		}
@@ -56,5 +54,11 @@ func getInitPsDB(cfg pkg.Config) (*psql.Storage, error) {
 		return db, nil
 	}
 
-	return nil, nil
+	//memory whith file storage
+	db, err := infile.NewFileStorage(cfg.FileStoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }

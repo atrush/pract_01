@@ -12,6 +12,7 @@ var _ Servicer = (*Service)(nil)
 type Service struct {
 	shotURLService *ShortURLService
 	userService    *UserService
+	db             st.Storage
 }
 
 // New Service
@@ -32,6 +33,7 @@ func NewService(db st.Storage) (*Service, error) {
 	return &Service{
 		shotURLService: shortURLService,
 		userService:    userService,
+		db:             db,
 	}, nil
 }
 
@@ -43,4 +45,8 @@ func (s *Service) URL() URLShortener {
 // Return User service
 func (s *Service) User() UserManager {
 	return s.userService
+}
+
+func (s *Service) Ping() error {
+	return s.db.Ping()
 }

@@ -29,15 +29,14 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 	}, nil
 }
 
-//Save URL
+// Save URL
 func (r *shortURLRepository) SaveURL(sht *storage.ShortURL) error {
-	if sht.ShortID == "" {
-		return errors.New("нельзя использовать id")
+	if err := sht.Validate(); err != nil {
+		return err
 	}
-	if sht.URL == "" {
-		return errors.New("нельзя сохранить пустое значение")
-	}
-	if !r.IsAvailableID(sht.ShortID) {
+
+	exist, _ := r.Exist(sht.ShortID)
+	if exist {
 		return errors.New("shortID уже существует")
 	}
 
@@ -80,15 +79,18 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 }
 
 // Get array of URL for user
-func (r *shortURLRepository) GetUserURLList(userID uuid.UUID) ([]storage.ShortURL, error) {
+func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]storage.ShortURL, error) {
 	if len(r.cache.urlCache) == 0 {
 		return nil, nil
 	}
 
-	userURLs := make([]storage.ShortURL, 0, len(r.cache.urlCache))
+	userURLs := make([]storage.ShortURL, 0, limit)
 	for _, v := range r.cache.urlCache {
 		if v.UserID != uuid.Nil && v.UserID == userID {
 			userURLs = append(userURLs, v)
+			if len(userURLs) == limit {
+				break
+			}
 		}
 	}
 
@@ -100,12 +102,12 @@ func (r *shortURLRepository) GetUserURLList(userID uuid.UUID) ([]storage.ShortUR
 }
 
 // Check shortID not exist
-func (r *shortURLRepository) IsAvailableID(shortID string) bool {
+func (r *shortURLRepository) Exist(shortID string) (bool, error) {
 	r.RLock()
 	_, ok := r.cache.shortURLidx[shortID]
 	defer r.RUnlock()
 
-	return !ok
+	return ok, nil
 }
 
 // Write item to file

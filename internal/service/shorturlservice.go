@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ func newShortURLService(db storage.Storage) (*ShortURLService, error) {
 
 // Return array stored URLs by user UUID
 func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]storage.ShortURL, error) {
-	list, err := sh.db.URL().GetUserURLList(userID)
+	list, err := sh.db.URL().GetUserURLList(userID, 100)
 	if err != nil {
 		return nil, err
 	}
@@ -46,17 +47,19 @@ func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 
 // Save URL for user, return shortID
 func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, error) {
-	shortID, err := sh.genShortURL(string(srcURL))
+
+	sht := storage.ShortURL{
+		ID:     uuid.New(),
+		UserID: userID,
+		URL:    srcURL,
+	}
+
+	shortID, err := sh.genShortURL(srcURL, sht.ID)
 	if err != nil {
 		return "", err
 	}
 
-	sht := storage.ShortURL{
-		ID:      uuid.New(),
-		ShortID: shortID,
-		UserID:  userID,
-		URL:     srcURL,
-	}
+	sht.ShortID = shortID
 
 	if err = sh.db.URL().SaveURL(&sht); err != nil {
 		return "", err
@@ -66,8 +69,8 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, err
 }
 
 // Generate unique ShortID
-func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
-	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, "")
+func (sh *ShortURLService) genShortURL(srcURL string, id uuid.UUID) (string, error) {
+	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, id.String())
 	if err != nil {
 		return "", err
 	}
@@ -79,13 +82,21 @@ func (sh *ShortURLService) genShortURL(srcURL string) (string, error) {
 func (sh *ShortURLService) iterShortURLGenerator(srcURL string, iterationCount int, salt string) (string, error) {
 	maxIterate := 10
 	shortID := GenerateShortLink(srcURL, salt)
-	if !sh.db.URL().IsAvailableID(shortID) {
+	exist, err := sh.db.URL().Exist(shortID)
+	if err != nil {
+		return "", fmt.Errorf("ошибка генерации короткой ссылки:%w", err)
+	}
+	if exist {
 		iterationCount++
+		if iterationCount > maxIterate {
+			return "", fmt.Errorf("ошибка генерации короткой ссылки, число попыток:%v", maxIterate)
+		}
+
 		salt := uuid.New().String()
 
 		shortID, err := sh.iterShortURLGenerator(srcURL, iterationCount, salt)
-		if err != nil || iterationCount > maxIterate {
-			return "", errors.New("ошибка генерации короткой ссылки")
+		if err != nil {
+			return "", err
 		}
 
 		return shortID, nil

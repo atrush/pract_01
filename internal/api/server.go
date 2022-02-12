@@ -8,7 +8,6 @@ import (
 
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/storage"
-	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/atrush/pract_01.git/pkg"
 )
 
@@ -17,13 +16,13 @@ type Server struct {
 }
 
 // Return new server
-func NewServer(cfg *pkg.Config, db storage.Storage, psDB *psql.Storage) (*Server, error) {
+func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 	svc, err := service.NewService(db)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}
 
-	handler, err := NewHandler(svc, psDB, cfg.BaseURL)
+	handler, err := NewHandler(svc, cfg.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}

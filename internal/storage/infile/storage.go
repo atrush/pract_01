@@ -1,6 +1,7 @@
 package infile
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/atrush/pract_01.git/internal/storage"
@@ -79,18 +80,25 @@ func (s *Storage) initFromFile() error {
 	if len(data) > 0 {
 		for _, v := range data {
 			//set URL index
-			if s.shortURLRepo.IsAvailableID(v.ShortID) {
+			existShortID, _ := s.shortURLRepo.Exist(v.ShortID)
+			if !existShortID {
 				s.cache.shortURLidx[v.ShortID] = v.ID
 			}
 
 			//set Users cahe
-			if v.UserID != uuid.Nil && !s.userRepo.Exist(v.UserID) {
+			existUser, _ := s.userRepo.Exist(v.UserID)
+			if v.UserID != uuid.Nil && !existUser {
 				s.cache.userCache[v.UserID] = v.UserID
 			}
 		}
 	}
 
 	return nil
+}
+
+// Check DB connection.
+func (st *Storage) Ping() error {
+	return errors.New("db not initialized")
 }
 
 // Empty, imitate close function

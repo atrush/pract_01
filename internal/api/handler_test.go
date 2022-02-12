@@ -10,16 +10,16 @@ import (
 
 	"github.com/atrush/pract_01.git/internal/service"
 	st "github.com/atrush/pract_01.git/internal/storage"
-	"github.com/google/uuid"
 
 	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/atrush/pract_01.git/pkg"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_SaveURLHandler(t *testing.T) {
-
 	tests := []struct {
 		name        string
 		method      string
@@ -73,11 +73,14 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/1xQ6p+JI",
 			outCodeExpected: 307,
 			initFixtures: func(storage st.Storage) {
+				storage.User().AddUser(&st.User{
+					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
+				})
 				storage.URL().SaveURL(&st.ShortURL{
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://practicum.yandex.ru/",
-					UserID:  uuid.Nil})
+					UserID:  uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
 			},
 		},
 		{
@@ -130,11 +133,14 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			outCodeExpected:     201,
 			outContTypeExpected: "application/json",
 			initFixtures: func(storage st.Storage) {
+				storage.User().AddUser(&st.User{
+					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
+				})
 				storage.URL().SaveURL(&st.ShortURL{
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://yandex.ru/",
-					UserID:  uuid.Nil})
+					UserID:  uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
 			},
 		},
 	}
@@ -150,7 +156,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			svc, err := service.NewService(db)
 			require.NoError(t, err)
 
-			h, err := NewHandler(svc, nil, "http://localhost:8080")
+			h, err := NewHandler(svc, "http://localhost:8080")
 			require.NoError(t, err)
 
 			r := NewRouter(h)
@@ -194,7 +200,7 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	svc, err := service.NewService(db)
 	require.NoError(t, err)
 
-	h, err := NewHandler(svc, nil, "http://localhost:8080")
+	h, err := NewHandler(svc, "http://localhost:8080")
 	require.NoError(t, err)
 
 	r := NewRouter(h)

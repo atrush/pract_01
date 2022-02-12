@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -14,15 +13,13 @@ import (
 type Handler struct {
 	auth    *Auth
 	svc     service.Servicer
-	psDB    *psql.Storage
 	baseURL string
 }
 
 // Return new handler
-func NewHandler(svc service.Servicer, psDB *psql.Storage, baseURL string) (*Handler, error) {
+func NewHandler(svc service.Servicer, baseURL string) (*Handler, error) {
 	return &Handler{
 		svc:     svc,
-		psDB:    psDB,
 		baseURL: baseURL,
 		auth:    NewAuth(svc),
 	}, nil
@@ -30,12 +27,8 @@ func NewHandler(svc service.Servicer, psDB *psql.Storage, baseURL string) (*Hand
 
 // Check db connection
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
-	if h.psDB == nil {
-		h.serverError(w, "база данных не инициирована")
-		return
-	}
 
-	if err := h.psDB.Ping(); err != nil {
+	if err := h.svc.Ping(); err != nil {
 		h.serverError(w, err.Error())
 		return
 	}
@@ -58,7 +51,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if urlList == nil {
+	if urlList == nil || (urlList != nil && len(urlList) == 0) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}

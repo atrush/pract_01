@@ -27,12 +27,12 @@ func newUserRepository(c *cache) (*userRepository, error) {
 }
 
 // Check userID exist
-func (r *userRepository) Exist(userID uuid.UUID) bool {
+func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 	r.RLock()
 	_, ok := r.cache.userCache[userID]
 	defer r.RUnlock()
 
-	return ok
+	return ok, nil
 }
 
 // Add User

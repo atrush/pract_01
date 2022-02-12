@@ -25,12 +25,12 @@ func newUserService(db storage.Storage) (*UserService, error) {
 }
 
 // Check user is exist
-func (u *UserService) Exist(id uuid.UUID) bool {
-	if id != uuid.Nil {
-		return u.db.User().Exist(id)
+func (u *UserService) Exist(id uuid.UUID) (bool, error) {
+	if id == uuid.Nil {
+		return false, errors.New("ошибка проверки существования user: uuid nil")
 	}
 
-	return false
+	return u.db.User().Exist(id)
 }
 
 // Add new user
