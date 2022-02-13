@@ -276,49 +276,6 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 		})
 	}
 }
-func Test_testSaveAndGetURL(t *testing.T) {
-	cfg, err := pkg.NewConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	longURL := "https://practicum.yandex.ru/"
-	longURLHeader := "Location"
-
-	db, err := infile.NewFileStorage("")
-	require.NoError(t, err)
-
-	svc, err := service.NewService(db)
-	require.NoError(t, err)
-
-	h, err := NewHandler(svc, "http://localhost:8080")
-	require.NoError(t, err)
-
-	r := NewRouter(h)
-	request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(longURL)))
-	request.RemoteAddr = "localhost" + cfg.ServerPort
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, request)
-
-	res := w.Result()
-	resBody, err := io.ReadAll(res.Body)
-	require.NoError(t, err)
-	defer res.Body.Close()
-
-	shortURL := string(resBody)
-
-	request = httptest.NewRequest(http.MethodGet, shortURL, nil)
-	request.RemoteAddr = "localhost" + cfg.ServerPort
-	w = httptest.NewRecorder()
-	r.ServeHTTP(w, request)
-	res = w.Result()
-	defer res.Body.Close()
-	assert.True(t, res.StatusCode == 307, "При получении ссылки ожидался код ответа %d, получен %d", 307, w.Code)
-
-	headLocationVal, ok := res.Header[longURLHeader]
-	require.True(t, ok, "При получении ссылки не получен заголовок %v", longURLHeader)
-	assert.Equal(t, longURL, headLocationVal[0], "Поучена ссылка %v, ожидалась %v", headLocationVal[0], longURL)
-}
 
 func (tt *HandlerTest) CheckTest(db st.Storage, t *testing.T) {
 	svc, err := service.NewService(db)
@@ -343,8 +300,6 @@ func (tt *HandlerTest) CheckTest(db st.Storage, t *testing.T) {
 	defer res.Body.Close()
 
 	strBody := string(resBody)
-
-	fmt.Printf("%v: res - %v\n", tt.name, strBody)
 
 	if tt.outContTypeExpected != "" {
 		assert.True(t, res.Header.Get("Content-Type") == tt.outContTypeExpected,
