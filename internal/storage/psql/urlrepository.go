@@ -5,8 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/lib/pq"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgerrcode"
+
+	"github.com/atrush/pract_01.git/internal/shterrors"
 	st "github.com/atrush/pract_01.git/internal/storage"
 )
 
@@ -74,14 +78,30 @@ func (r *shortURLRepository) SaveURL(sht *st.ShortURL) error {
 	if err := sht.Validate(); err != nil {
 		return fmt.Errorf("ошибка хранилица:%w", err)
 	}
-
-	return r.db.QueryRow(
-		"INSERT INTO urls (id, user_id, srcurl, shorturl) VALUES ($1, $2, $3, $4) RETURNING id",
+	row := r.db.QueryRow(
+		"INSERT INTO urls (id, user_id, srcurl, shorturl) VALUES ($1, $2, $3, $4) RETURNING id ",
 		sht.ID,
 		sht.UserID,
 		sht.URL,
 		sht.ShortID,
-	).Scan(&sht.ID)
+	)
+
+	if row.Err() != nil {
+		pqErr, ok := row.Err().(*pq.Error)
+		if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "urls_srcurl_key" {
+			shortID, err := r.GetShortURLBySrcURL(sht.URL)
+			if err != nil {
+				return fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
+					sht.URL, err)
+			}
+			return &shterrors.ErrorConflictSaveURL{
+				Err:           row.Err(),
+				ExistShortURL: shortID,
+			}
+		}
+	}
+
+	return row.Scan(&sht.ID)
 }
 
 // Get source URL by shortID from db
@@ -89,6 +109,20 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 	res := ""
 	err := r.db.QueryRow(
 		"select srcurl from urls where shorturl = $1", shortID,
+	).Scan(&res)
+
+	if err != nil {
+		return "", fmt.Errorf("ошибка хранилица:%w", err)
+	}
+
+	return res, nil
+}
+
+// Get source URL by shortID from db
+func (r *shortURLRepository) GetShortURLBySrcURL(url string) (string, error) {
+	res := ""
+	err := r.db.QueryRow(
+		"select shorturl from urls where srcurl = $1", url,
 	).Scan(&res)
 
 	if err != nil {

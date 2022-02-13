@@ -3,10 +3,12 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/atrush/pract_01.git/internal/service"
+	"github.com/atrush/pract_01.git/internal/shterrors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -141,6 +143,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 
 // Save URL with JSON request
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
+	// read incoming ShortenRequest
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {
 		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
@@ -159,18 +162,28 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 		h.badRequestError(w, "неверный формат JSON")
 		return
 	}
+
 	if err := incoming.Validate(); err != nil {
 		h.badRequestError(w, err.Error())
 		return
 	}
 
+	// save to db and get shortID
 	userID := h.getUserIDFromContext(r)
 	shortID, err := h.svc.URL().SaveURL(incoming.SrcURL, userID)
+
+	// handle conflict Add
+	isConflict := false
 	if err != nil {
-		h.badRequestError(w, err.Error())
-		return
+		shortID, isConflict = processConflictErr(err)
+		if !isConflict {
+			h.badRequestError(w, err.Error())
+
+			return
+		}
 	}
 
+	// marshal response
 	jsResult, err := json.Marshal(ShortenResponse{
 		Result: h.baseURL + "/" + shortID,
 	})
@@ -180,12 +193,28 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	// write response
+	if isConflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	w.Write(jsResult)
+
+}
+
+// check err if conflict adiing URL, if exist return shortID and true
+func processConflictErr(err error) (string, bool) {
+	if err != nil && errors.Is(err, &shterrors.ErrorConflictSaveURL{}) {
+		conflictErr, _ := err.(*shterrors.ErrorConflictSaveURL)
+		return conflictErr.ExistShortURL, true
+	}
+	return "", false
 }
 
 // Save URL with body request
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
+	// read incoming URL
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		h.serverError(w, err.Error())
@@ -200,13 +229,25 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserIDFromContext(r)
 	shortID, err := h.svc.URL().SaveURL(string(srcURL), userID)
+
+	// handle conflict Add
+	isConflict := false
 	if err != nil {
-		h.badRequestError(w, err.Error())
-		return
+		shortID, isConflict = processConflictErr(err)
+		if !isConflict {
+			h.badRequestError(w, err.Error())
+
+			return
+		}
 	}
 
-	w.Header().Set("content-type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
+	// write response
+	w.Header().Set("content-type", "text/plain; charset=utf-8")
+	if isConflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	w.Write([]byte(h.baseURL + "/" + shortID))
 }
 

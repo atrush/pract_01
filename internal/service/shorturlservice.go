@@ -96,14 +96,12 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, err
 		URL:    srcURL,
 	}
 
-	shortID, err := sh.genShortURL(srcURL, sht.ID, nil)
-	if err != nil {
+	var err error
+	if sht.ShortID, err = sh.genShortURL(srcURL, sht.ID, nil); err != nil {
 		return "", err
 	}
 
-	sht.ShortID = shortID
-
-	if err = sh.db.URL().SaveURL(&sht); err != nil {
+	if err := sh.db.URL().SaveURL(&sht); err != nil {
 		return "", err
 	}
 

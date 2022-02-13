@@ -90,6 +90,12 @@ func (s *Storage) initFromFile() error {
 			if v.UserID != uuid.Nil && !existUser {
 				s.cache.userCache[v.UserID] = v.UserID
 			}
+
+			//set srcURL cache
+			existURL, _ := s.shortURLRepo.Exist(v.URL)
+			if !existURL {
+				s.cache.srcURLidx[v.URL] = v.ID
+			}
 		}
 	}
 

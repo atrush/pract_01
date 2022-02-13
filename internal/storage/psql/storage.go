@@ -93,6 +93,7 @@ func initBase(db *sql.DB) error {
 		"		srcurl varchar(2050) not null," +
 		"		shorturl varchar (16) not null," +
 		"		unique (shorturl)," +
+		"		unique (srcurl)," +
 		"		primary key (id)," +
 		"		foreign key (user_id) references users (id)" +
 		"	);")

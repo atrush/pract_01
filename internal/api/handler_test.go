@@ -12,21 +12,98 @@ import (
 	"github.com/atrush/pract_01.git/internal/service"
 	st "github.com/atrush/pract_01.git/internal/storage"
 	"github.com/atrush/pract_01.git/internal/storage/infile"
-	"github.com/atrush/pract_01.git/internal/storage/psql"
 	"github.com/atrush/pract_01.git/pkg"
-
 	"github.com/google/uuid"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+type HandlerTest struct {
+	name        string
+	method      string
+	url         string
+	body        string
+	contentType string
+
+	outBodyExpected     string
+	outContTypeExpected string
+	outCodeExpected     int
+
+	initFixtures func(storage st.Storage)
+}
+
+func TestHandler_SaveConflict(t *testing.T) {
+	cfg, err := pkg.NewConfig()
+	require.NoError(t, err)
+	tests := []HandlerTest{
+		{
+			name:                "POST conflict /api/shorten",
+			method:              http.MethodPost,
+			url:                 "/api/shorten",
+			body:                "{\"url\": \"https://practicum.yandex.ru\"}",
+			contentType:         "application/json",
+			outCodeExpected:     409,
+			outBodyExpected:     fmt.Sprintf("{\"result\":\"%v/1xQ6p+JI\"}", cfg.BaseURL),
+			outContTypeExpected: "application/json",
+			initFixtures: func(storage st.Storage) {
+				storage.User().AddUser(&st.User{
+					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
+				})
+				storage.URL().SaveURL(&st.ShortURL{
+					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID: "1xQ6p+JI",
+					URL:     "https://practicum.yandex.ru",
+					UserID:  uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
+			},
+		},
+		{
+			name:                "POST conflict /",
+			method:              http.MethodPost,
+			url:                 "/",
+			body:                "https://practicum.yandex.ru/",
+			outCodeExpected:     409,
+			outContTypeExpected: "text/plain; charset=utf-8",
+			outBodyExpected:     fmt.Sprintf("%v/1xQ6p+JI", cfg.BaseURL),
+			initFixtures: func(storage st.Storage) {
+				storage.User().AddUser(&st.User{
+					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
+				})
+				storage.URL().SaveURL(&st.ShortURL{
+					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID: "1xQ6p+JI",
+					URL:     "https://practicum.yandex.ru/",
+					UserID:  uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			//tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable")
+			tstSt, err := infile.NewFileStorage("")
+			require.NoError(t, err)
+			require.NoError(t, err)
+
+			if tt.initFixtures != nil {
+				tt.initFixtures(tstSt)
+			}
+			tt.CheckTest(tstSt, t)
+			// tstSt.DropAll()
+			// tstSt.Close()
+		})
+	}
+}
 func TestHandler_ShortenBatch(t *testing.T) {
 
-	tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable")
-	require.NoError(t, err)
+	// tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable")
+	// require.NoError(t, err)
 
-	defer tstSt.Close()
-	defer tstSt.DropAll()
+	// defer tstSt.Close()
+	// defer tstSt.DropAll()
+
+	tstSt, err := infile.NewFileStorage("")
+	require.NoError(t, err)
 
 	svc, err := service.NewService(tstSt)
 	require.NoError(t, err)
@@ -71,23 +148,10 @@ func TestHandler_ShortenBatch(t *testing.T) {
 		}
 	}
 	require.Equal(t, found, len(arrTst), "в полученных ссылках не найдено %v ссылок", len(arrTst)-found)
-
 }
 
 func TestHandler_SaveURLHandler(t *testing.T) {
-	tests := []struct {
-		name        string
-		method      string
-		url         string
-		body        string
-		contentType string
-
-		outBodyExpected     string
-		outContTypeExpected string
-		outCodeExpected     int
-
-		initFixtures func(storage st.Storage)
-	}{
+	tests := []HandlerTest{
 		{
 			name:            "POST empty URL",
 			method:          http.MethodPost,
@@ -199,6 +263,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, err := infile.NewFileStorage("")
@@ -207,39 +272,10 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			if tt.initFixtures != nil {
 				tt.initFixtures(db)
 			}
-
-			svc, err := service.NewService(db)
-			require.NoError(t, err)
-
-			h, err := NewHandler(svc, "http://localhost:8080")
-			require.NoError(t, err)
-
-			r := NewRouter(h)
-			request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
-
-			if tt.contentType != "" {
-				request.Header.Set("Content-Type", tt.contentType)
-			}
-
-			w := httptest.NewRecorder()
-			r.ServeHTTP(w, request)
-
-			res := w.Result()
-			resBody, err := io.ReadAll(res.Body)
-			require.NoError(t, err)
-			defer res.Body.Close()
-
-			fmt.Printf("%v: res - %v\n", tt.name, string(resBody))
-
-			if tt.outContTypeExpected != "" {
-				require.True(t, res.Header.Get("Content-Type") == tt.outContTypeExpected,
-					"Ожидался content-type ответа %v, получен %v", tt.outContTypeExpected, res.Header.Get("Content-Type"))
-			}
-			assert.True(t, tt.outCodeExpected == 0 || res.StatusCode == tt.outCodeExpected, "Ожидался код ответа %d, получен %d", tt.outCodeExpected, w.Code)
+			tt.CheckTest(db, t)
 		})
 	}
 }
-
 func Test_testSaveAndGetURL(t *testing.T) {
 	cfg, err := pkg.NewConfig()
 	if err != nil {
@@ -282,4 +318,45 @@ func Test_testSaveAndGetURL(t *testing.T) {
 	headLocationVal, ok := res.Header[longURLHeader]
 	require.True(t, ok, "При получении ссылки не получен заголовок %v", longURLHeader)
 	assert.Equal(t, longURL, headLocationVal[0], "Поучена ссылка %v, ожидалась %v", headLocationVal[0], longURL)
+}
+
+func (tt *HandlerTest) CheckTest(db st.Storage, t *testing.T) {
+	svc, err := service.NewService(db)
+	require.NoError(t, err)
+
+	h, err := NewHandler(svc, "http://localhost:8080")
+	require.NoError(t, err)
+
+	r := NewRouter(h)
+	request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
+
+	if tt.contentType != "" {
+		request.Header.Set("Content-Type", tt.contentType)
+	}
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, request)
+
+	res := w.Result()
+	resBody, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	defer res.Body.Close()
+
+	strBody := string(resBody)
+
+	fmt.Printf("%v: res - %v\n", tt.name, strBody)
+
+	if tt.outContTypeExpected != "" {
+		assert.True(t, res.Header.Get("Content-Type") == tt.outContTypeExpected,
+			"Ожидался content-type ответа %v, получен %v", tt.outContTypeExpected, res.Header.Get("Content-Type"))
+	}
+
+	if tt.outCodeExpected != 0 {
+		assert.True(t, res.StatusCode == tt.outCodeExpected, "Ожидался код ответа %d, получен %d", tt.outCodeExpected, w.Code)
+	}
+
+	if tt.outBodyExpected != "" {
+		assert.Equal(t, strBody, tt.outBodyExpected, "Ожидался ответа %v, получен %v", tt.outBodyExpected, strBody)
+	}
+
 }

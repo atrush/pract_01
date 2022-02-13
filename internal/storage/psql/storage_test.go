@@ -7,17 +7,14 @@ import (
 	"github.com/google/uuid"
 
 	st "github.com/atrush/pract_01.git/internal/storage"
-	"github.com/atrush/pract_01.git/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+const testDSN = "postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable"
+
 func TestRepoSaveAndCheckUser(t *testing.T) {
-
-	cfg, err := pkg.NewConfig()
-	require.NoError(t, err)
-
-	tstSt, err := NewTestStorage(cfg.DatabaseDSN)
+	tstSt, err := NewTestStorage(testDSN)
 	require.NoError(t, err)
 
 	defer tstSt.Close()
@@ -35,10 +32,7 @@ func TestRepoSaveAndCheckUser(t *testing.T) {
 }
 
 func TestRepoSaveAndGetURL(t *testing.T) {
-	cfg, err := pkg.NewConfig()
-	require.NoError(t, err)
-
-	tstSt, err := NewTestStorage(cfg.DatabaseDSN)
+	tstSt, err := NewTestStorage(testDSN)
 	require.NoError(t, err)
 
 	defer tstSt.Close()
@@ -68,10 +62,7 @@ func TestRepoSaveAndGetURL(t *testing.T) {
 }
 
 func TestRepoSaveAndGetUserURLarray(t *testing.T) {
-	cfg, err := pkg.NewConfig()
-	require.NoError(t, err)
-
-	tstSt, err := NewTestStorage(cfg.DatabaseDSN)
+	tstSt, err := NewTestStorage(testDSN)
 	require.NoError(t, err)
 
 	defer tstSt.Close()
