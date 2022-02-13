@@ -59,6 +59,7 @@ func TestHandler_ShortenBatch(t *testing.T) {
 	res := w.Result()
 	arrResp := make([]BatchResponse, 0, 500)
 	assert.NoError(t, json.NewDecoder(res.Body).Decode(&arrResp))
+	res.Body.Close()
 
 	found := 0
 	for _, tstEl := range arrTst {
