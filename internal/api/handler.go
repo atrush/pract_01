@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -84,10 +85,14 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//serialize
-	json.NewEncoder(w).Encode(&respArr)
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetIndent("", "   ")
+	encoder.Encode(respArr)
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	w.Write(buffer.Bytes())
 }
 
 // Return arr of stored urls for current user
