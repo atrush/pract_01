@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/google/uuid"
 )
 
 type fileReader struct {
@@ -30,14 +31,14 @@ func (f *fileReader) Close() error {
 	return f.file.Close()
 }
 
-func (f *fileReader) ReadAll() (map[string]string, error) {
-	data := make(map[string]string)
+func (f *fileReader) ReadAll() (map[uuid.UUID]storage.ShortURL, error) {
+	data := make(map[uuid.UUID]storage.ShortURL)
 	for f.scanner.Scan() {
 		lineURL := storage.ShortURL{}
 		if err := json.Unmarshal(f.scanner.Bytes(), &lineURL); err != nil {
 			return nil, fmt.Errorf("ошибка обработки данных из файла: %w", err)
 		}
-		data[lineURL.ShortID] = lineURL.URL
+		data[lineURL.ID] = lineURL
 	}
 
 	if err := f.scanner.Err(); err != nil {

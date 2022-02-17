@@ -12,12 +12,14 @@ type Config struct {
 	ServerPort      string `env:"SERVER_ADDRESS" validate:"required,hostname_port"`
 	BaseURL         string `env:"BASE_URL" validate:"required,url"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" validate:"-"`
+	DatabaseDSN     string `env:"DATABASE_DSN" validate:"-"`
 }
 
 const (
 	defServerPort  = ":8080"
 	defBaseURL     = "http://localhost:8080"
 	defFileStorage = ""
+	defDatabaseDSN = ""
 )
 
 func NewConfig() (*Config, error) {
@@ -35,7 +37,7 @@ func (c *Config) readFlagConfig() {
 	flag.StringVar(&c.ServerPort, "a", defServerPort, "порт HTTP-сервера <:port>")
 	flag.StringVar(&c.BaseURL, "b", defBaseURL, "базовый URL для сокращенных ссылок <http://localhost:port>")
 	flag.StringVar(&c.FileStoragePath, "f", defFileStorage, "путь до файла с сокращёнными URL")
-
+	flag.StringVar(&c.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
 	flag.Parse()
 }
 
@@ -54,6 +56,9 @@ func (c *Config) readEnvConfig() error {
 	}
 	if envConfig.FileStoragePath != "" {
 		c.FileStoragePath = envConfig.FileStoragePath
+	}
+	if envConfig.DatabaseDSN != "" {
+		c.DatabaseDSN = envConfig.DatabaseDSN
 	}
 
 	return nil

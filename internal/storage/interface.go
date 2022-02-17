@@ -1,7 +1,26 @@
 package storage
 
-type URLStorer interface {
+import (
+	"github.com/google/uuid"
+)
+
+type Storage interface {
+	URL() URLRepository
+	User() UserRepository
+	Close()
+	Ping() error
+}
+
+type URLRepository interface {
 	GetURL(shortID string) (string, error)
-	SaveURL(shortID string, srcURL string) (string, error)
-	IsAvailableID(shortID string) bool
+	GetUserURLList(userID uuid.UUID, limit int) ([]ShortURL, error)
+	SaveURL(*ShortURL) error
+	SaveURLBuff(*ShortURL) error
+	SaveURLBuffFlush() error
+	Exist(shortID string) (bool, error)
+}
+
+type UserRepository interface {
+	AddUser(*User) error
+	Exist(userID uuid.UUID) (bool, error)
 }

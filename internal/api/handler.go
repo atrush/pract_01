@@ -1,28 +1,149 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/atrush/pract_01.git/internal/service"
+	"github.com/atrush/pract_01.git/internal/shterrors"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
-	svc     service.URLShortener
+	auth    *Auth
+	svc     service.Servicer
 	baseURL string
 }
 
-func NewHandler(svc service.URLShortener, baseURL string) *Handler {
-
+// Return new handler
+func NewHandler(svc service.Servicer, baseURL string) (*Handler, error) {
 	return &Handler{
 		svc:     svc,
 		baseURL: baseURL,
-	}
+		auth:    NewAuth(svc),
+	}, nil
 }
 
+// Check db connection
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+
+	if err := h.svc.Ping(); err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// Save batch of URLs
+func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
+	ct := r.Header.Get("Content-Type")
+
+	if ct != "application/json" {
+		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
+		return
+	}
+
+	//read batch
+	var batch []BatchRequest
+	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	defer r.Body.Close()
+
+	//make map id[url] to add
+	listToAdd := make(map[string]string, len(batch))
+	for _, batchEl := range batch {
+		if _, exist := listToAdd[batchEl.ID]; exist {
+			h.badRequestError(w, "в переданном массиве есть повторяющиеся идентифиакторы")
+
+			return
+		}
+		listToAdd[batchEl.ID] = batchEl.URL
+	}
+
+	userID := h.getUserIDFromContext(r)
+
+	//save mp to db, values in map updates to shortURL
+	if err := h.svc.URL().SaveURLList(listToAdd, userID); err != nil {
+		h.serverError(w, err.Error())
+
+		return
+	}
+
+	//make response arr
+	var respArr []BatchResponse
+	for k, v := range listToAdd {
+		respArr = append(respArr, BatchResponse{
+			ID:       k,
+			ShortURL: h.baseURL + "/" + v,
+		})
+	}
+
+	//serialize
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetIndent("", "   ")
+	encoder.Encode(respArr)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(buffer.Bytes())
+}
+
+// Return arr of stored urls for current user
+func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
+	userID := h.getUserIDFromContext(r)
+
+	if userID == uuid.Nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	urlList, err := h.svc.URL().GetUserURLList(userID)
+	if err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	if urlList == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if len(urlList) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	responseArr := make([]ShortenListResponse, 0, len(urlList))
+	for _, v := range urlList {
+		responseArr = append(responseArr, ShortenListResponse{
+			ShortURL: h.baseURL + "/" + v.ShortID,
+			SrcURL:   v.URL,
+		})
+	}
+
+	jsResult, err := json.Marshal(responseArr)
+	if err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(jsResult))
+}
+
+// Save URL with JSON request
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
+	// read incoming ShortenRequest
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {
 		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
@@ -41,17 +162,28 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 		h.badRequestError(w, "неверный формат JSON")
 		return
 	}
+
 	if err := incoming.Validate(); err != nil {
 		h.badRequestError(w, err.Error())
 		return
 	}
 
-	shortID, err := h.svc.SaveURL(incoming.SrcURL)
+	// save to db and get shortID
+	userID := h.getUserIDFromContext(r)
+	shortID, err := h.svc.URL().SaveURL(incoming.SrcURL, userID)
+
+	// handle conflict Add
+	isConflict := false
 	if err != nil {
-		h.badRequestError(w, err.Error())
-		return
+		shortID, isConflict = processConflictErr(err)
+		if !isConflict {
+			h.badRequestError(w, err.Error())
+
+			return
+		}
 	}
 
+	// marshal response
 	jsResult, err := json.Marshal(ShortenResponse{
 		Result: h.baseURL + "/" + shortID,
 	})
@@ -61,11 +193,28 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	// write response
+	if isConflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	w.Write(jsResult)
+
 }
 
+// check err if conflict adiing URL, if exist return shortID and true
+func processConflictErr(err error) (string, bool) {
+	if err != nil && errors.Is(err, &shterrors.ErrorConflictSaveURL{}) {
+		conflictErr, _ := err.(*shterrors.ErrorConflictSaveURL)
+		return conflictErr.ExistShortURL, true
+	}
+	return "", false
+}
+
+// Save URL with body request
 func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
+	// read incoming URL
 	srcURL, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		h.serverError(w, err.Error())
@@ -78,16 +227,31 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortID, err := h.svc.SaveURL(string(srcURL))
+	userID := h.getUserIDFromContext(r)
+	shortID, err := h.svc.URL().SaveURL(string(srcURL), userID)
+
+	// handle conflict Add
+	isConflict := false
 	if err != nil {
-		h.badRequestError(w, err.Error())
-		return
+		shortID, isConflict = processConflictErr(err)
+		if !isConflict {
+			h.badRequestError(w, err.Error())
+
+			return
+		}
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	// write response
+	w.Header().Set("content-type", "text/plain; charset=utf-8")
+	if isConflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	w.Write([]byte(h.baseURL + "/" + shortID))
 }
 
+// Return stored URL by short URL
 func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	shortID := chi.URLParam(r, "shortID")
 	if shortID == "" {
@@ -95,7 +259,7 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	longURL, err := h.svc.GetURL(shortID)
+	longURL, err := h.svc.URL().GetURL(shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
@@ -106,9 +270,23 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("content-type", "text/plain")
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
+
+// Get user UUID from context
+func (h *Handler) getUserIDFromContext(r *http.Request) uuid.UUID {
+	ctxID := r.Context().Value(ContextKeyUserID).(string)
+	userUUID, err := uuid.Parse(ctxID)
+
+	if err == nil {
+		return userUUID
+	}
+
+	return uuid.Nil
+}
+
 func (h *Handler) serverError(w http.ResponseWriter, errText string) {
 	http.Error(w, errText, http.StatusInternalServerError)
 }

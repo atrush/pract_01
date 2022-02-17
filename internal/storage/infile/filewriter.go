@@ -30,13 +30,9 @@ func (f *fileWriter) Close() error {
 	return f.file.Close()
 }
 
-func (f *fileWriter) WriteURL(shortID string, srcURL string) error {
-	writeURL := storage.ShortURL{
-		ShortID: shortID,
-		URL:     srcURL,
-	}
+func (f *fileWriter) WriteURL(sht storage.ShortURL) error {
 
-	jsURL, err := json.Marshal(writeURL)
+	jsURL, err := json.Marshal(sht)
 	if err != nil {
 		return fmt.Errorf("ошибка обработки данных для записи в файл: %w", err)
 	}
