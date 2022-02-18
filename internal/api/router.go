@@ -21,12 +21,16 @@ func NewRouter(handler *Handler) *chi.Mux {
 	r.Use(gzipReaderHandle)
 	r.Use(handler.auth.Middleware)
 
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AllowContentType("application/json"))
+		r.Post("/api/shorten/batch", handler.SaveBatch)
+		r.Post("/api/shorten", handler.SaveURLJSONHandler)
+	})
+
 	r.Get("/ping", handler.Ping)
 	r.Get("/user/urls", handler.GetUserUrls)
 	r.Get("/{shortID}", handler.GetURLHandler)
 	r.Post("/", handler.SaveURLHandler)
-	r.Post("/api/shorten/batch", handler.SaveBatch)
-	r.Post("/api/shorten", handler.SaveURLJSONHandler)
 
 	return r
 }

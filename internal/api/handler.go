@@ -41,12 +41,6 @@ func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 
 // Save batch of URLs
 func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
-	ct := r.Header.Get("Content-Type")
-
-	if ct != "application/json" {
-		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
-		return
-	}
 
 	//read batch
 	var batch []BatchRequest
@@ -144,11 +138,6 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 // Save URL with JSON request
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	// read incoming ShortenRequest
-	ct := r.Header.Get("Content-Type")
-	if ct != "application/json" {
-		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
-		return
-	}
 
 	jsBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -293,10 +282,6 @@ func (h *Handler) serverError(w http.ResponseWriter, errText string) {
 
 func (h *Handler) badRequestError(w http.ResponseWriter, errText string) {
 	http.Error(w, errText, http.StatusBadRequest)
-}
-
-func (h *Handler) unsupportedMediaTypeError(w http.ResponseWriter, errText string) {
-	http.Error(w, errText, http.StatusUnsupportedMediaType)
 }
 
 func (h *Handler) notFoundError(w http.ResponseWriter) {
