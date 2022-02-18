@@ -54,11 +54,6 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 	//make map id[url] to add
 	listToAdd := make(map[string]string, len(batch))
 	for _, batchEl := range batch {
-		if _, exist := listToAdd[batchEl.ID]; exist {
-			h.badRequestError(w, "в переданном массиве есть повторяющиеся идентифиакторы")
-
-			return
-		}
 		listToAdd[batchEl.ID] = batchEl.URL
 	}
 
