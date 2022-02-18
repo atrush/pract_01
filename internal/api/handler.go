@@ -261,9 +261,12 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 
 // Get user UUID from context
 func (h *Handler) getUserIDFromContext(r *http.Request) uuid.UUID {
-	ctxID := r.Context().Value(ContextKeyUserID).(string)
-	userUUID, err := uuid.Parse(ctxID)
+	ctxID := r.Context().Value(ContextKeyUserID)
+	if ctxID == nil {
+		return uuid.Nil
+	}
 
+	userUUID, err := uuid.Parse(ctxID.(string))
 	if err == nil {
 		return userUUID
 	}
