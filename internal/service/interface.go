@@ -5,17 +5,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type Servicer interface {
-	URL() URLShortener
-	User() UserManager
-	Ping() error
-}
-
 type URLShortener interface {
 	GetURL(shortID string) (string, error)
 	GetUserURLList(userID uuid.UUID) ([]st.ShortURL, error)
 	SaveURL(srcURL string, userID uuid.UUID) (string, error)
 	SaveURLList(srcArr map[string]string, userID uuid.UUID) error
+	Ping() error
 }
 
 type UserManager interface {

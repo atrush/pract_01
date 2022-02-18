@@ -17,12 +17,16 @@ type Server struct {
 
 // Return new server
 func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
-	svc, err := service.NewService(db)
+	svcSht, err := service.NewShortURLService(db)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
+	}
+	svcUser, err := service.NewUserService(db)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}
 
-	handler, err := NewHandler(svc, cfg.BaseURL)
+	handler, err := NewHandler(svcSht, svcUser, cfg.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}

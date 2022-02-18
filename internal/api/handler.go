@@ -14,17 +14,17 @@ import (
 )
 
 type Handler struct {
-	auth    *Auth
-	svc     service.Servicer
+	auth    Auth
+	svc     service.URLShortener
 	baseURL string
 }
 
 // Return new handler
-func NewHandler(svc service.Servicer, baseURL string) (*Handler, error) {
+func NewHandler(shtSvc service.URLShortener, authSvc service.UserManager, baseURL string) (*Handler, error) {
 	return &Handler{
-		svc:     svc,
+		svc:     shtSvc,
 		baseURL: baseURL,
-		auth:    NewAuth(svc),
+		auth:    NewAuth(authSvc),
 	}, nil
 }
 
@@ -60,7 +60,7 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserIDFromContext(r)
 
 	//save mp to db, values in map updates to shortURL
-	if err := h.svc.URL().SaveURLList(listToAdd, userID); err != nil {
+	if err := h.svc.SaveURLList(listToAdd, userID); err != nil {
 		h.serverError(w, err.Error())
 
 		return
@@ -95,7 +95,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlList, err := h.svc.URL().GetUserURLList(userID)
+	urlList, err := h.svc.GetUserURLList(userID)
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -154,7 +154,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 
 	// save to db and get shortID
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.URL().SaveURL(incoming.SrcURL, userID)
+	shortID, err := h.svc.SaveURL(incoming.SrcURL, userID)
 
 	// handle conflict Add
 	isConflict := false
@@ -212,7 +212,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.URL().SaveURL(string(srcURL), userID)
+	shortID, err := h.svc.SaveURL(string(srcURL), userID)
 
 	// handle conflict Add
 	isConflict := false
@@ -243,7 +243,7 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	longURL, err := h.svc.URL().GetURL(shortID)
+	longURL, err := h.svc.GetURL(shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return

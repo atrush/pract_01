@@ -105,10 +105,13 @@ func TestHandler_ShortenBatch(t *testing.T) {
 	tstSt, err := infile.NewFileStorage("")
 	require.NoError(t, err)
 
-	svc, err := service.NewService(tstSt)
+	svcSht, err := service.NewShortURLService(tstSt)
 	require.NoError(t, err)
 
-	h, err := NewHandler(svc, "http://localhost:8080")
+	svcUser, err := service.NewUserService(tstSt)
+	require.NoError(t, err)
+
+	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080")
 	require.NoError(t, err)
 
 	r := NewRouter(h)
@@ -278,10 +281,13 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 }
 
 func (tt *HandlerTest) CheckTest(db st.Storage, t *testing.T) {
-	svc, err := service.NewService(db)
+	svcSht, err := service.NewShortURLService(db)
 	require.NoError(t, err)
 
-	h, err := NewHandler(svc, "http://localhost:8080")
+	svcUser, err := service.NewUserService(db)
+	require.NoError(t, err)
+
+	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080")
 	require.NoError(t, err)
 
 	r := NewRouter(h)

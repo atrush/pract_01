@@ -15,7 +15,7 @@ type ShortURLService struct {
 }
 
 // Return new URL service
-func newShortURLService(db storage.Storage) (*ShortURLService, error) {
+func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}
@@ -106,6 +106,11 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, err
 	}
 
 	return sht.ShortID, nil
+}
+
+// Check db connection
+func (sh *ShortURLService) Ping() error {
+	return sh.db.Ping()
 }
 
 // Generate unique ShortID, for generating multiple shortIDs use generatedCheck
