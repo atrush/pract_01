@@ -28,7 +28,7 @@ func NewRouter(handler *Handler) *chi.Mux {
 	})
 
 	r.Get("/ping", handler.Ping)
-	r.Get("/user/urls", handler.GetUserUrls)
+	r.Get("/api/user/urls", handler.GetUserUrls)
 	r.Get("/{shortID}", handler.GetURLHandler)
 	r.Post("/", handler.SaveURLHandler)
 
