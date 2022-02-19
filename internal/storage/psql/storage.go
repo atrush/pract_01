@@ -79,7 +79,12 @@ func (s *Storage) Ping() error {
 
 // Close DB connection.
 func (s Storage) Close() {
+	if s.db == nil {
+		return
+	}
+
 	s.db.Close()
+	s.db = nil
 }
 
 func initBase(db *sql.DB) error {
