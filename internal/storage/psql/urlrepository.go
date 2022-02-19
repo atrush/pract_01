@@ -2,7 +2,6 @@ package psql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/lib/pq"
@@ -45,39 +44,46 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 }
 
 // Save ShorURLs stored in bufferr to db
-func (r *shortURLRepository) SaveURLBuffFlush() error {
-	if r.db == nil {
-		return errors.New("ошибка транзакции сохранения: база не инициирована")
-	}
+func (r *shortURLRepository) SaveURLBuffFlush() (err error) {
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
-
+		return
 	}
+
+	// defer make rollback and clean buffer
+	defer func() {
+		r.urlbuffer = r.urlbuffer[:0]
+
+		if err != nil {
+			if rollErr := tx.Rollback(); rollErr != nil {
+				err = fmt.Errorf("ошибка транзакции сохранения:%v; транзакцию не удалось отменить:%w", err.Error(), rollErr)
+			}
+		}
+	}()
+
 	stmt, err := tx.Prepare("INSERT INTO urls(id, user_id, srcurl, shorturl) VALUES($1, $2, $3, $4)RETURNING id")
 	if err != nil {
-		return err
+		return
 	}
 
 	for _, sht := range r.urlbuffer {
-		dbObj, err := schema.NewURLFromCanonical(sht)
+		var dbObj schema.ShortURL
+		dbObj, err = schema.NewURLFromCanonical(sht)
+
 		if err == nil {
-			if stmt.QueryRow(dbObj.ID, dbObj.UserID, dbObj.URL, dbObj.ShortID).Scan(&dbObj.ID); err == nil {
-				sht.ID = dbObj.ID
-				continue
+			if err = stmt.QueryRow(dbObj.ID, dbObj.UserID, dbObj.URL, dbObj.ShortID).Scan(&dbObj.ID); err != nil {
+				return
 			}
+			sht.ID = dbObj.ID
+			continue
 		}
 
-		if err = tx.Rollback(); err != nil {
-			return fmt.Errorf("ошибка транзакции сохранения: транзакцию не удалось отменить:%w", err)
-		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("ошибка транзакции сохранения:%w", err)
+	if err = tx.Commit(); err != nil {
+		return
 	}
 
-	r.urlbuffer = r.urlbuffer[:0]
 	return nil
 }
 
