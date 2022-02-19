@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
 )
@@ -34,8 +35,8 @@ func (u *UserService) Exist(id uuid.UUID) (bool, error) {
 }
 
 // Add new user
-func (u *UserService) AddUser() (*storage.User, error) {
-	newUser := storage.User{
+func (u *UserService) AddUser() (*model.User, error) {
+	newUser := model.User{
 		ID: uuid.New(),
 	}
 

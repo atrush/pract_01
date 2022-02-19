@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
 )
@@ -29,14 +30,14 @@ func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) error {
 
 	//map of new shortURL with incoming IDs
-	toAdd := make(map[string]storage.ShortURL, len(src))
+	toAdd := make(map[string]model.ShortURL, len(src))
 
 	//map for cheking new shortID for unique
 	checkShortID := make(map[string]string, len(src))
 
 	//generate new shortURLs and send to save db
 	for k, v := range src {
-		sht := storage.ShortURL{
+		sht := model.ShortURL{
 			ID:     uuid.New(),
 			UserID: userID,
 			URL:    v,
@@ -68,7 +69,7 @@ func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) 
 }
 
 // Return array stored URLs by user UUID
-func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]storage.ShortURL, error) {
+func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]model.ShortURL, error) {
 	list, err := sh.db.URL().GetUserURLList(userID, 100)
 	if err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 // Save URL for user, return shortID
 func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, error) {
 
-	sht := storage.ShortURL{
+	sht := model.ShortURL{
 		ID:     uuid.New(),
 		UserID: userID,
 		URL:    srcURL,

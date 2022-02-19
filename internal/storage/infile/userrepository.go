@@ -4,7 +4,9 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/atrush/pract_01.git/internal/storage/schema"
 	"github.com/google/uuid"
 )
 
@@ -36,9 +38,13 @@ func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 }
 
 // Add User
-func (r *userRepository) AddUser(user *storage.User) error {
+func (r *userRepository) AddUser(user *model.User) error {
+	dbObj, err := schema.NewUserFromCanonical(*user)
+	if err != nil {
+		return err
+	}
 	r.Lock()
-	r.cache.userCache[user.ID] = user.ID
+	r.cache.userCache[user.ID] = dbObj.ID
 	defer r.Unlock()
 
 	return nil

@@ -3,6 +3,7 @@ package psql
 import (
 	"database/sql"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
 )
@@ -21,7 +22,7 @@ func newUserRepository(db *sql.DB) *userRepository {
 }
 
 // Add user to db
-func (r *userRepository) AddUser(user *storage.User) error {
+func (r *userRepository) AddUser(user *model.User) error {
 	result := uuid.Nil
 
 	return r.db.QueryRow(

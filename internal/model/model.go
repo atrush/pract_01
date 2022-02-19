@@ -1,4 +1,4 @@
-package storage
+package model
 
 import (
 	"fmt"
@@ -15,13 +15,23 @@ type ShortURL struct {
 }
 
 type User struct {
-	ID uuid.UUID `json:"id"`
+	ID uuid.UUID `json:"id" validate:"required"`
 }
 
 func (s *ShortURL) Validate() error {
 	validate := validator.New()
 
 	if err := validate.Struct(s); err != nil {
+		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
+	}
+
+	return nil
+}
+
+func (u *User) Validate() error {
+	validate := validator.New()
+
+	if err := validate.Struct(u); err != nil {
 		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
 	}
 
