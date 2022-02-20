@@ -18,21 +18,21 @@ import (
 
 var _ st.URLRepository = (*shortURLRepository)(nil)
 
-type UrlBuffer struct {
+type URLBuffer struct {
 	buf []model.ShortURL
 	sync.Mutex
 }
 
 type shortURLRepository struct {
 	db           *sql.DB
-	insertBuffer UrlBuffer
+	insertBuffer URLBuffer
 }
 
 // New postgress URL repository
 func newShortURLRepository(db *sql.DB) *shortURLRepository {
 	return &shortURLRepository{
 		db: db,
-		insertBuffer: UrlBuffer{
+		insertBuffer: URLBuffer{
 			buf: make([]model.ShortURL, 0, 100),
 		},
 	}
