@@ -63,8 +63,7 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 		}
 	}
 
-	_, userExist := r.cache.userCache[dbObj.UserID]
-	if dbObj.UserID != uuid.Nil && !userExist {
+	if userExist := r.UserExist(sht.UserID); !userExist {
 		return errors.New("пользователь не найден")
 	}
 
@@ -144,6 +143,15 @@ func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]mode
 	}
 
 	return dbURLs.ToCanonical()
+}
+
+// Check user exist
+func (r *shortURLRepository) UserExist(userID uuid.UUID) bool {
+	r.RLock()
+	defer r.RUnlock()
+	_, userExist := r.cache.userCache[userID]
+
+	return userExist
 }
 
 // Check shortID not exist
