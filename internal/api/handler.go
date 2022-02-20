@@ -66,20 +66,15 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//make response arr
-	var respArr []BatchResponse
-	for k, v := range listToAdd {
-		respArr = append(respArr, BatchResponse{
-			ID:       k,
-			ShortURL: h.baseURL + "/" + v,
-		})
-	}
-
-	//serialize
+	//serialize response
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "   ")
-	encoder.Encode(respArr)
+	if err := encoder.Encode(NewBatchListResponseFromMap(listToAdd, h.baseURL)); err != nil {
+		h.serverError(w, err.Error())
+
+		return
+	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -111,15 +106,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseArr := make([]ShortenListResponse, 0, len(urlList))
-	for _, v := range urlList {
-		responseArr = append(responseArr, ShortenListResponse{
-			ShortURL: h.baseURL + "/" + v.ShortID,
-			SrcURL:   v.URL,
-		})
-	}
-
-	jsResult, err := json.Marshal(responseArr)
+	jsResult, err := json.Marshal(NewShortenListResponseFromCanonical(urlList, h.baseURL))
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
