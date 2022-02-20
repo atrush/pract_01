@@ -85,7 +85,7 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 		}
 	}()
 
-	stmt, err := tx.Prepare("INSERT INTO urls(id, user_id, srcurl, shorturl) VALUES($1, $2, $3, $4)RETURNING id")
+	stmt, err := tx.Prepare("INSERT INTO urls(id, user_id, srcurl, shorturl, isdeleted) VALUES($1, $2, $3, $4, $5)RETURNING id")
 	if err != nil {
 		return
 	}
@@ -95,7 +95,7 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 		dbObj, err = schema.NewURLFromCanonical(sht)
 
 		if err == nil {
-			if err = stmt.QueryRow(dbObj.ID, dbObj.UserID, dbObj.URL, dbObj.ShortID).Scan(&dbObj.ID); err != nil {
+			if err = stmt.QueryRow(dbObj.ID, dbObj.UserID, dbObj.URL, dbObj.ShortID, dbObj.IsDeleted).Scan(&dbObj.ID); err != nil {
 				return
 			}
 			sht.ID = dbObj.ID
@@ -122,11 +122,12 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 		return fmt.Errorf("ошибка хранилица:%w", err)
 	}
 	row := r.db.QueryRow(
-		"INSERT INTO urls (id, user_id, srcurl, shorturl) VALUES ($1, $2, $3, $4) RETURNING id ",
+		"INSERT INTO urls (id, user_id, srcurl, shorturl, isdeleted) VALUES ($1, $2, $3, $4, $5) RETURNING id ",
 		dbObj.ID,
 		dbObj.UserID,
 		dbObj.URL,
 		dbObj.ShortID,
+		dbObj.IsDeleted,
 	)
 
 	if row.Err() != nil {
@@ -187,7 +188,7 @@ func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]mode
 	userURLs = make([]schema.ShortURL, 0, limit)
 
 	rows, err := r.db.Query(
-		"SELECT id, user_id, srcurl, shorturl from urls WHERE user_id = $1 LIMIT $2", userID, limit)
+		"SELECT id, user_id, srcurl, shorturl, isdeleted from urls WHERE user_id = $1 LIMIT $2", userID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +197,7 @@ func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]mode
 
 	for rows.Next() {
 		var s schema.ShortURL
-		err = rows.Scan(&s.ID, &s.UserID, &s.URL, &s.ShortID)
+		err = rows.Scan(&s.ID, &s.UserID, &s.URL, &s.ShortID, &s.IsDeleted)
 		if err != nil {
 			return nil, err
 		}

@@ -97,6 +97,7 @@ func initBase(db *sql.DB) error {
 		"		user_id uuid not null," +
 		"		srcurl varchar(2050) not null," +
 		"		shorturl varchar (16) not null," +
+		"		isdeleted boolean not null," +
 		"		unique (shorturl)," +
 		"		unique (srcurl)," +
 		"		primary key (id)," +

@@ -203,10 +203,11 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			outCodeExpected: 201,
 			initFixtures: func(storage st.Storage) {
 				storage.URL().SaveURL(&model.ShortURL{
-					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
-					ShortID: "1xQ6p+JI",
-					URL:     "https://practicum.yandex.ru/",
-					UserID:  uuid.Nil})
+					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID:   "1xQ6p+JI",
+					URL:       "https://practicum.yandex.ru/",
+					IsDeleted: false,
+					UserID:    uuid.Nil})
 			},
 		},
 		{
@@ -225,10 +226,11 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
 				storage.URL().SaveURL(&model.ShortURL{
-					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
-					ShortID: "1xQ6p+JI",
-					URL:     "https://practicum.yandex.ru/",
-					UserID:  uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
+					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID:   "1xQ6p+JI",
+					URL:       "https://practicum.yandex.ru/",
+					IsDeleted: false,
+					UserID:    uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
 			},
 		},
 		{
@@ -285,10 +287,11 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
 				storage.URL().SaveURL(&model.ShortURL{
-					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
-					ShortID: "1xQ6p+JI",
-					URL:     "https://yandex.ru/",
-					UserID:  uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
+					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID:   "1xQ6p+JI",
+					IsDeleted: false,
+					URL:       "https://yandex.ru/",
+					UserID:    uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
 			},
 		},
 	}

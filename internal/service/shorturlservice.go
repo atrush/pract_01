@@ -38,9 +38,10 @@ func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) 
 	//generate new shortURLs and send to save db
 	for k, v := range src {
 		sht := model.ShortURL{
-			ID:     uuid.New(),
-			UserID: userID,
-			URL:    v,
+			ID:        uuid.New(),
+			UserID:    userID,
+			URL:       v,
+			IsDeleted: false,
 		}
 
 		shortID, err := sh.genShortURL(v, sht.ID, checkShortID)
@@ -92,9 +93,10 @@ func (sh *ShortURLService) GetURL(shortID string) (string, error) {
 func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, error) {
 
 	sht := model.ShortURL{
-		ID:     uuid.New(),
-		UserID: userID,
-		URL:    srcURL,
+		ID:        uuid.New(),
+		UserID:    userID,
+		URL:       srcURL,
+		IsDeleted: false,
 	}
 
 	var err error

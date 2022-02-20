@@ -8,10 +8,11 @@ import (
 )
 
 type ShortURL struct {
-	ID      uuid.UUID `json:"id"`
-	ShortID string    `json:"shortid" validate:"required"`
-	URL     string    `json:"url" validate:"required,url,max=2048"`
-	UserID  uuid.UUID `json:"userid" validate:"required"`
+	ID        uuid.UUID `json:"id"`
+	ShortID   string    `json:"shortid" validate:"required"`
+	URL       string    `json:"url" validate:"required,url,max=2048"`
+	UserID    uuid.UUID `json:"userid" validate:"required"`
+	IsDeleted bool      `json:"isdeleted"`
 }
 
 type User struct {
