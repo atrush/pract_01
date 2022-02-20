@@ -90,9 +90,9 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 }
 
 // Return stored URL by shortID
-func (r *shortURLRepository) GetURL(shortID string) (string, error) {
+func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
 	if shortID == "" {
-		return "", errors.New("нельзя использовать пустой id")
+		return model.ShortURL{}, errors.New("нельзя использовать пустой id")
 	}
 
 	r.RLock()
@@ -102,11 +102,11 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 	if ok {
 		item, ok := r.cache.urlCache[idx]
 		if ok {
-			return item.URL, nil
+			return item.ToCanonical()
 		}
 	}
 
-	return "", nil
+	return model.ShortURL{}, nil
 }
 
 // Return stored shortID by srcURL

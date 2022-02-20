@@ -80,10 +80,10 @@ func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]model.ShortURL, e
 }
 
 // Return stored URL by shortID
-func (sh *ShortURLService) GetURL(shortID string) (string, error) {
+func (sh *ShortURLService) GetURL(shortID string) (model.ShortURL, error) {
 	longURL, err := sh.db.URL().GetURL(shortID)
 	if err != nil {
-		return "", err
+		return model.ShortURL{}, err
 	}
 
 	return longURL, nil

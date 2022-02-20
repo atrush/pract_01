@@ -13,7 +13,7 @@ type Storage interface {
 }
 
 type URLRepository interface {
-	GetURL(shortID string) (string, error)
+	GetURL(shortID string) (model.ShortURL, error)
 	GetUserURLList(userID uuid.UUID, limit int) ([]model.ShortURL, error)
 	SaveURL(*model.ShortURL) error
 	SaveURLBuff(*model.ShortURL) error

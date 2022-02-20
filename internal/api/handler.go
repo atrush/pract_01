@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/shterrors"
 	"github.com/go-chi/chi/v5"
@@ -230,20 +231,26 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	longURL, err := h.svc.GetURL(shortID)
+	storedURL, err := h.svc.GetURL(shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
 	}
 
-	if longURL == "" {
+	if storedURL == (model.ShortURL{}) {
 		h.notFoundError(w)
 		return
 	}
 
+	if storedURL.IsDeleted {
+		w.Header().Set("content-type", "text/plain")
+		w.WriteHeader(http.StatusGone)
+	}
+
 	w.Header().Set("content-type", "text/plain")
-	w.Header().Set("Location", longURL)
+	w.Header().Set("Location", storedURL.URL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
+
 }
 
 // Get user UUID from context

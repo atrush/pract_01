@@ -234,6 +234,23 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			},
 		},
 		{
+			name:            "GET exist Deleted URL",
+			method:          http.MethodGet,
+			url:             "/1xQ6p+JI",
+			outCodeExpected: 410,
+			initFixtures: func(storage st.Storage) {
+				storage.User().AddUser(&model.User{
+					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
+				})
+				storage.URL().SaveURL(&model.ShortURL{
+					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
+					ShortID:   "1xQ6p+JI",
+					URL:       "https://practicum.yandex.ru/",
+					IsDeleted: true,
+					UserID:    uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1")})
+			},
+		},
+		{
 			name:            "POST JSON URL not valid content-type",
 			method:          http.MethodPost,
 			url:             "/api/shorten",

@@ -134,14 +134,14 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 		// check duplicate srcurl
 		pqErr, ok := row.Err().(*pq.Error)
 		if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "urls_srcurl_key" {
-			shortID, err := r.GetShortURLBySrcURL(sht.URL)
+			existURL, err := r.GetShortURLBySrcURL(sht.URL)
 			if err != nil {
 				return fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
 					sht.URL, err)
 			}
 			return &shterrors.ErrorConflictSaveURL{
 				Err:           row.Err(),
-				ExistShortURL: shortID,
+				ExistShortURL: existURL.ShortID,
 			}
 		}
 	}
@@ -155,31 +155,31 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 }
 
 // Get source URL by shortID from db
-func (r *shortURLRepository) GetURL(shortID string) (string, error) {
-	res := ""
+func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
+	dbObj := schema.ShortURL{}
 	err := r.db.QueryRow(
-		"select srcurl from urls where shorturl = $1", shortID,
-	).Scan(&res)
+		"select id, user_id, srcurl, shorturl, isdeleted from urls where shorturl = $1", shortID,
+	).Scan(&dbObj.ID, &dbObj.UserID, &dbObj.URL, &dbObj.ShortID, &dbObj.IsDeleted)
 
 	if err != nil {
-		return "", fmt.Errorf("ошибка хранилица:%w", err)
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
 	}
 
-	return res, nil
+	return dbObj.ToCanonical()
 }
 
 // Get source URL by shortID from db
-func (r *shortURLRepository) GetShortURLBySrcURL(url string) (string, error) {
-	res := ""
+func (r *shortURLRepository) GetShortURLBySrcURL(url string) (model.ShortURL, error) {
+	dbObj := schema.ShortURL{}
 	err := r.db.QueryRow(
-		"select shorturl from urls where srcurl = $1", url,
-	).Scan(&res)
+		"select id, user_id, srcurl, shorturl, isdeleted from urls where srcurl = $1", url,
+	).Scan(&dbObj.ID, &dbObj.UserID, &dbObj.URL, &dbObj.ShortID, &dbObj.IsDeleted)
 
 	if err != nil {
-		return "", fmt.Errorf("ошибка хранилица:%w", err)
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
 	}
 
-	return res, nil
+	return dbObj.ToCanonical()
 }
 
 // Get users urls by user id
