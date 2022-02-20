@@ -2,6 +2,7 @@ package psql
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
@@ -23,6 +24,10 @@ func newUserRepository(db *sql.DB) *userRepository {
 
 // Add user to db
 func (r *userRepository) AddUser(user *model.User) error {
+	if user == nil {
+		return errors.New("user is nil")
+	}
+
 	result := uuid.Nil
 
 	return r.db.QueryRow(

@@ -2,6 +2,7 @@ package psql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -40,6 +41,10 @@ func newShortURLRepository(db *sql.DB) *shortURLRepository {
 
 // Save ShortURL using buffer
 func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
+	if sht == nil {
+		return errors.New("URL is nil")
+	}
+
 	r.insertBuffer.Lock()
 	defer r.insertBuffer.Unlock()
 
@@ -108,6 +113,10 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 
 // Save URL to db
 func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
+	if sht == nil {
+		return errors.New("URL is nil")
+	}
+
 	dbObj, err := schema.NewURLFromCanonical(*sht)
 	if err != nil {
 		return fmt.Errorf("ошибка хранилица:%w", err)

@@ -33,6 +33,9 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 }
 
 func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
+	if sht == nil {
+		return errors.New("short URL is nil")
+	}
 	return r.SaveURL(sht)
 }
 
@@ -43,6 +46,9 @@ func (r *shortURLRepository) SaveURLBuffFlush() error {
 
 // Save URL
 func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
+	if sht == nil {
+		return errors.New("short URL is nil")
+	}
 
 	dbObj, err := schema.NewURLFromCanonical(*sht)
 	if err != nil {

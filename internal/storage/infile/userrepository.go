@@ -39,6 +39,9 @@ func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 
 // Add User
 func (r *userRepository) AddUser(user *model.User) error {
+	if user == nil {
+		return errors.New("user is nil")
+	}
 	dbObj, err := schema.NewUserFromCanonical(*user)
 	if err != nil {
 		return err
