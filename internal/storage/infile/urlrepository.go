@@ -43,6 +43,7 @@ func (r *shortURLRepository) SaveURLBuffFlush() error {
 
 // Save URL
 func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
+
 	dbObj, err := schema.NewURLFromCanonical(*sht)
 	if err != nil {
 		return fmt.Errorf("ошибка хранилица:%w", err)
@@ -67,12 +68,13 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 		return errors.New("пользователь не найден")
 	}
 
+	r.Lock()
+	defer r.Unlock()
 	if r.fileName != "" {
-		r.Lock()
+
 		if err := r.writeToFile(dbObj); err != nil {
 			return err
 		}
-		defer r.Unlock()
 	}
 
 	r.cache.urlCache[dbObj.ID] = dbObj
@@ -90,13 +92,13 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 
 	r.RLock()
 	idx, ok := r.cache.shortURLidx[shortID]
-	if ok {
+	defer r.RUnlock()
 
+	if ok {
 		item, ok := r.cache.urlCache[idx]
 		if ok {
 			return item.URL, nil
 		}
-		defer r.RUnlock()
 	}
 
 	return "", nil
@@ -106,19 +108,23 @@ func (r *shortURLRepository) GetURL(shortID string) (string, error) {
 func (r *shortURLRepository) GetShortURLBySrcURL(url string) string {
 	r.RLock()
 	id, ok := r.cache.srcURLidx[url]
+	defer r.RUnlock()
+
 	if ok {
 		sht, okSht := r.cache.urlCache[id]
 		if okSht {
 			return sht.ShortID
 		}
 	}
-	defer r.RUnlock()
 
 	return ""
 }
 
 // Get array of URL for user
 func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]model.ShortURL, error) {
+	r.RLock()
+	defer r.RUnlock()
+
 	if len(r.cache.urlCache) == 0 {
 		return nil, nil
 	}

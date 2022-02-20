@@ -3,6 +3,7 @@ package psql
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"github.com/lib/pq"
 
@@ -17,25 +18,35 @@ import (
 
 var _ st.URLRepository = (*shortURLRepository)(nil)
 
+type UrlBuffer struct {
+	buf []model.ShortURL
+	sync.Mutex
+}
+
 type shortURLRepository struct {
-	db        *sql.DB
-	urlbuffer []model.ShortURL
+	db           *sql.DB
+	insertBuffer UrlBuffer
 }
 
 // New postgress URL repository
 func newShortURLRepository(db *sql.DB) *shortURLRepository {
 	return &shortURLRepository{
-		db:        db,
-		urlbuffer: make([]model.ShortURL, 0, 100),
+		db: db,
+		insertBuffer: UrlBuffer{
+			buf: make([]model.ShortURL, 0, 100),
+		},
 	}
 }
 
 // Save ShortURL using buffer
 func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
-	r.urlbuffer = append(r.urlbuffer, *sht)
+	r.insertBuffer.Lock()
+	defer r.insertBuffer.Unlock()
 
-	if cap(r.urlbuffer) == len(r.urlbuffer) {
-		err := r.SaveURLBuffFlush()
+	r.insertBuffer.buf = append(r.insertBuffer.buf, *sht)
+
+	if cap(r.insertBuffer.buf) == len(r.insertBuffer.buf) {
+		err := r.saveURLBuffFlushNoLock()
 		if err != nil {
 			return fmt.Errorf("ошибка хранилица:%w", err)
 		}
@@ -43,8 +54,17 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	return nil
 }
 
-// Save ShorURLs stored in bufferr to db
 func (r *shortURLRepository) SaveURLBuffFlush() (err error) {
+	r.insertBuffer.Lock()
+	defer r.insertBuffer.Unlock()
+
+	err = r.saveURLBuffFlushNoLock()
+
+	return
+}
+
+// Save ShorURLs stored in bufferr to db
+func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return
@@ -52,8 +72,7 @@ func (r *shortURLRepository) SaveURLBuffFlush() (err error) {
 
 	// defer make rollback and clean buffer
 	defer func() {
-		r.urlbuffer = r.urlbuffer[:0]
-
+		r.insertBuffer.buf = r.insertBuffer.buf[:0]
 		if err != nil {
 			if rollErr := tx.Rollback(); rollErr != nil {
 				err = fmt.Errorf("ошибка транзакции сохранения:%v; транзакцию не удалось отменить:%w", err.Error(), rollErr)
@@ -66,7 +85,7 @@ func (r *shortURLRepository) SaveURLBuffFlush() (err error) {
 		return
 	}
 
-	for _, sht := range r.urlbuffer {
+	for _, sht := range r.insertBuffer.buf {
 		var dbObj schema.ShortURL
 		dbObj, err = schema.NewURLFromCanonical(sht)
 
