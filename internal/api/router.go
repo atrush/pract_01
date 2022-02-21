@@ -25,6 +25,7 @@ func NewRouter(handler *Handler) *chi.Mux {
 		r.Use(middleware.AllowContentType("application/json"))
 		r.Post("/api/shorten/batch", handler.SaveBatch)
 		r.Post("/api/shorten", handler.SaveURLJSONHandler)
+		r.Delete("/api/user/urls", handler.DeleteBatch)
 	})
 
 	r.Get("/ping", handler.Ping)

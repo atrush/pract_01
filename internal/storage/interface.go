@@ -18,6 +18,7 @@ type URLRepository interface {
 	SaveURL(*model.ShortURL) error
 	SaveURLBuff(*model.ShortURL) error
 	SaveURLBuffFlush() error
+	DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error
 	Exist(shortID string) (bool, error)
 }
 

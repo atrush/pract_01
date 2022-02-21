@@ -32,6 +32,31 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 	}, nil
 }
 
+// Delete batch of URLs for user
+func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error {
+	if len(shortIDList) == 0 {
+		return nil
+	}
+	for _, v := range shortIDList {
+		sht, _ := r.GetURL(v)
+		if sht != (model.ShortURL{}) {
+			if sht.UserID == userID && !sht.IsDeleted {
+				sht.IsDeleted = true
+				toAdd, err := schema.NewURLFromCanonical(sht)
+				if err != nil {
+					return fmt.Errorf("ошибка обновления запси: %w", err)
+				}
+
+				r.Lock()
+				r.cache.urlCache[sht.ID] = toAdd
+				r.Unlock()
+			}
+
+		}
+	}
+	return nil
+}
+
 func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("short URL is nil")
@@ -154,9 +179,8 @@ func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]mode
 // Check user exist
 func (r *shortURLRepository) UserExist(userID uuid.UUID) bool {
 	r.RLock()
-	defer r.RUnlock()
 	_, userExist := r.cache.userCache[userID]
-
+	defer r.RUnlock()
 	return userExist
 }
 

@@ -30,6 +30,8 @@ type (
 		ID       string `json:"correlation_id"`
 		ShortURL string `json:"short_url"`
 	}
+
+	BatchDeleteRequest []string
 )
 
 func (s *ShortenRequest) Validate() error {

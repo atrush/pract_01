@@ -40,6 +40,28 @@ func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Mark batch of URLs as deleted
+func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
+	var batch BatchDeleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	userID := h.getUserIDFromContext(r)
+	if userID != uuid.Nil {
+		if err := h.svc.DeleteURLList(userID, batch...); err != nil {
+			h.serverError(w, err.Error())
+
+			return
+		}
+	}
+
+	w.Header().Set("content-type", "text/plain")
+	w.WriteHeader(http.StatusAccepted)
+}
+
 // Save batch of URLs
 func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 
@@ -245,6 +267,7 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 	if storedURL.IsDeleted {
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusGone)
+		return
 	}
 
 	w.Header().Set("content-type", "text/plain")

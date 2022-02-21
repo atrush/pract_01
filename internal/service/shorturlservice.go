@@ -26,6 +26,10 @@ func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	}, nil
 }
 
+func (sh *ShortURLService) DeleteURLList(userID uuid.UUID, shotIDList ...string) error {
+	return sh.db.URL().DeleteURLBatch(userID, shotIDList...)
+}
+
 // Save map[id]URL to db, updates URL to ShortID in map
 func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) error {
 

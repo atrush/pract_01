@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/lib/pq"
@@ -25,18 +26,106 @@ type URLBuffer struct {
 }
 
 type shortURLRepository struct {
-	db           *sql.DB
-	insertBuffer URLBuffer
+	db              *sql.DB
+	insertBuffer    URLBuffer
+	deleteChan      chan schema.ShortURL
+	flushDeleteChan chan schema.ShortURL
 }
 
 // New postgress URL repository
 func newShortURLRepository(db *sql.DB) *shortURLRepository {
-	return &shortURLRepository{
+	repo := shortURLRepository{
 		db: db,
 		insertBuffer: URLBuffer{
 			buf: make([]model.ShortURL, 0, 100),
 		},
+		deleteChan:      make(chan schema.ShortURL),
+		flushDeleteChan: make(chan schema.ShortURL),
 	}
+	repo.initDeleteBatchWorker()
+
+	return &repo
+}
+
+// Async mark as deleted list of shortIDs
+func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error {
+	if len(shortIDList) == 0 {
+		return errors.New("list to delkete is empty")
+	}
+
+	go func() {
+		for _, v := range shortIDList {
+			r.deleteChan <- schema.ShortURL{ShortID: v, UserID: userID}
+		}
+
+		//run flush on end of list
+		r.flushDeleteChan <- schema.ShortURL{}
+	}()
+
+	return nil
+}
+
+// Init single delete worker, that takes URLs from deleteChan and delete when filling the cache,
+// or when take signal from flushDeleteChan
+func (r *shortURLRepository) initDeleteBatchWorker() {
+	go func() {
+		cache := make([]schema.ShortURL, 0, 10)
+		for {
+			select {
+			// read URL to delete from deleteChan
+			case v := <-r.deleteChan:
+				cache = append(cache, v)
+				if len(cache) < cap(cache) {
+					continue
+				}
+			// read flush signal
+			case <-r.flushDeleteChan:
+				if len(cache) == 0 {
+					continue
+				}
+			}
+
+			if err := r.deleteTxURLBatch(cache); err != nil {
+				log.Fatalf("ошибка транзакции удаления очереди URL:%v", err.Error())
+			}
+			cache = make([]schema.ShortURL, 0, 10)
+		}
+	}()
+}
+
+// Delete array of URLs with transaction
+func (r *shortURLRepository) deleteTxURLBatch(urls []schema.ShortURL) (err error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return
+	}
+
+	// defer make rollback
+	defer func() {
+		if err != nil {
+			if rollErr := tx.Rollback(); rollErr != nil {
+				err = fmt.Errorf("ошибка транзакции удаления:%v; транзакцию не удалось отменить:%w", err.Error(), rollErr)
+			}
+		}
+	}()
+
+	stmt, err := tx.Prepare("UPDATE urls SET isdeleted = TRUE WHERE shorturl = $1 AND user_id = $2")
+	if err != nil {
+		return
+	}
+
+	for _, sht := range urls {
+		_, err = stmt.Exec(sht.ShortID, sht.UserID)
+		if err != nil {
+			return
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return
+	}
+
+	return nil
 }
 
 // Save ShortURL using buffer
@@ -96,6 +185,7 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 
 		if err == nil {
 			if err = stmt.QueryRow(dbObj.ID, dbObj.UserID, dbObj.URL, dbObj.ShortID, dbObj.IsDeleted).Scan(&dbObj.ID); err != nil {
+				err = fmt.Errorf("ошибка транзакции сохранения dbObj- %v :%w ", dbObj.UserID.String(), err)
 				return
 			}
 			sht.ID = dbObj.ID

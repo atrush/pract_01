@@ -88,7 +88,10 @@ func (s Storage) Close() {
 }
 
 func initBase(db *sql.DB) error {
-	db.Exec("DROP SCHEMA public CASCADE;CREATE SCHEMA public;")
+	row := db.QueryRow("DROP SCHEMA public CASCADE;CREATE SCHEMA public;")
+	if row.Err() != nil {
+		return row.Err()
+	}
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS users (" +
 		"		id uuid not null,						" +
 		"		primary key (id));" +
@@ -103,7 +106,7 @@ func initBase(db *sql.DB) error {
 		"		primary key (id)," +
 		"		foreign key (user_id) references users (id)" +
 		"	);")
-	if err != nil {
+	if row.Err() != nil {
 		return err
 	}
 	return nil

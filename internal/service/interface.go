@@ -10,6 +10,7 @@ type URLShortener interface {
 	GetUserURLList(userID uuid.UUID) ([]model.ShortURL, error)
 	SaveURL(srcURL string, userID uuid.UUID) (string, error)
 	SaveURLList(srcArr map[string]string, userID uuid.UUID) error
+	DeleteURLList(userID uuid.UUID, shortIDList ...string) error
 	Ping() error
 }
 
