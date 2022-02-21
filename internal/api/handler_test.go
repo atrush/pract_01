@@ -135,8 +135,9 @@ func (g *GoSaveBatch) SaveBatch() error {
 	g.r.ServeHTTP(w, request)
 
 	res := w.Result()
-	cookies := w.Result().Cookies()
-	res.Body.Close()
+	defer res.Body.Close()
+
+	cookies := res.Cookies()
 
 	//save cookie
 	g.cookie = cookies[0]
