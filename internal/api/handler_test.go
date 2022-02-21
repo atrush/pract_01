@@ -140,10 +140,11 @@ func (g *GoSaveBatch) SaveBatch() error {
 	g.cookie = cookies[0]
 
 	resBody, err := io.ReadAll(res.Body)
+	res.Body.Close()
+
 	if err != nil {
 		return err
 	}
-	res.Body.Close()
 
 	g.saved = make([]BatchResponse, 0, g.count)
 	if err := json.Unmarshal(resBody, &g.saved); err != nil {
@@ -189,6 +190,7 @@ func (g *GoSaveBatch) DeleteBatch() error {
 	g.r.ServeHTTP(w, request)
 
 	res := w.Result()
+	res.Body.Close()
 
 	if res.StatusCode != 202 {
 		return fmt.Errorf("проверка ответа хендлера удаления, код ответа %v вместо 202", res)
@@ -209,6 +211,7 @@ func (g *GoSaveBatch) CheckDeleted() error {
 		g.r.ServeHTTP(w, request)
 
 		res := w.Result()
+		res.Body.Close()
 		if res.StatusCode != 410 {
 			return fmt.Errorf("проверка удаленной ссылки, код ответа %v вместо 410", res.StatusCode)
 		}
