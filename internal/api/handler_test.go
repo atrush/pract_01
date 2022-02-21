@@ -135,10 +135,10 @@ func (g *GoSaveBatch) SaveBatch() error {
 	g.r.ServeHTTP(w, request)
 
 	res := w.Result()
+	cookies := w.Result().Cookies()
 	res.Body.Close()
 
 	//save cookie
-	cookies := w.Result().Cookies()
 	g.cookie = cookies[0]
 
 	resBody, err := io.ReadAll(res.Body)
@@ -239,7 +239,7 @@ func TestHandler_BatchDelete(t *testing.T) {
 	h := initHandler(t, tstSt)
 
 	g := &errgroup.Group{}
-	workersCount := 4
+	workersCount := 1
 
 	for j := 0; j < workersCount; j++ {
 		g.Go(func() error {
