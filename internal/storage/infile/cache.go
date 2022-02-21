@@ -1,11 +1,14 @@
 package infile
 
 import (
+	"sync"
+
 	"github.com/atrush/pract_01.git/internal/storage/schema"
 	"github.com/google/uuid"
 )
 
 type cache struct {
+	sync.RWMutex
 	urlCache    map[uuid.UUID]schema.ShortURL
 	shortURLidx map[string]uuid.UUID
 	srcURLidx   map[string]uuid.UUID

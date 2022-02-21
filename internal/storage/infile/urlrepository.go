@@ -3,7 +3,6 @@ package infile
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/shterrors"
@@ -15,9 +14,8 @@ import (
 var _ st.URLRepository = (*shortURLRepository)(nil)
 
 type shortURLRepository struct {
-	cache    cache
+	cache    *cache
 	fileName string
-	sync.RWMutex
 }
 
 // Init new repository
@@ -27,7 +25,7 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 	}
 
 	return &shortURLRepository{
-		cache:    *c,
+		cache:    c,
 		fileName: fileName,
 	}, nil
 }
@@ -47,9 +45,9 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 					return fmt.Errorf("ошибка обновления запси: %w", err)
 				}
 
-				r.Lock()
+				r.cache.Lock()
 				r.cache.urlCache[sht.ID] = toAdd
-				r.Unlock()
+				r.cache.Unlock()
 			}
 
 		}
@@ -98,8 +96,8 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 		return errors.New("пользователь не найден")
 	}
 
-	r.Lock()
-	defer r.Unlock()
+	r.cache.Lock()
+	defer r.cache.Unlock()
 	if r.fileName != "" {
 
 		if err := r.writeToFile(dbObj); err != nil {
@@ -120,9 +118,9 @@ func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
 		return model.ShortURL{}, errors.New("нельзя использовать пустой id")
 	}
 
-	r.RLock()
+	r.cache.RLock()
 	idx, ok := r.cache.shortURLidx[shortID]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	if ok {
 		item, ok := r.cache.urlCache[idx]
@@ -136,9 +134,9 @@ func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
 
 // Return stored shortID by srcURL
 func (r *shortURLRepository) GetShortURLBySrcURL(url string) string {
-	r.RLock()
+	r.cache.RLock()
 	id, ok := r.cache.srcURLidx[url]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	if ok {
 		sht, okSht := r.cache.urlCache[id]
@@ -152,8 +150,8 @@ func (r *shortURLRepository) GetShortURLBySrcURL(url string) string {
 
 // Get array of URL for user
 func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]model.ShortURL, error) {
-	r.RLock()
-	defer r.RUnlock()
+	r.cache.RLock()
+	defer r.cache.RUnlock()
 
 	if len(r.cache.urlCache) == 0 {
 		return nil, nil
@@ -178,26 +176,26 @@ func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]mode
 
 // Check user exist
 func (r *shortURLRepository) UserExist(userID uuid.UUID) bool {
-	r.RLock()
+	r.cache.RLock()
 	_, userExist := r.cache.userCache[userID]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 	return userExist
 }
 
 // Check shortID not exist
 func (r *shortURLRepository) Exist(shortID string) (bool, error) {
-	r.RLock()
+	r.cache.RLock()
 	_, ok := r.cache.shortURLidx[shortID]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	return ok, nil
 }
 
 // Check shortID not exist
 func (r *shortURLRepository) ExistSrcURL(url string) (bool, error) {
-	r.RLock()
+	r.cache.RLock()
 	_, ok := r.cache.srcURLidx[url]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	return ok, nil
 }

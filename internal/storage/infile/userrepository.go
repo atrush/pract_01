@@ -2,7 +2,6 @@ package infile
 
 import (
 	"errors"
-	"sync"
 
 	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
@@ -13,8 +12,7 @@ import (
 var _ storage.UserRepository = (*userRepository)(nil)
 
 type userRepository struct {
-	cache cache
-	sync.RWMutex
+	cache *cache
 }
 
 // Init new repository
@@ -24,15 +22,15 @@ func newUserRepository(c *cache) (*userRepository, error) {
 	}
 
 	return &userRepository{
-		cache: *c,
+		cache: c,
 	}, nil
 }
 
 // Check userID exist
 func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
-	r.RLock()
+	r.cache.RLock()
 	_, ok := r.cache.userCache[userID]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	return ok, nil
 }
@@ -46,9 +44,9 @@ func (r *userRepository) AddUser(user *model.User) error {
 	if err != nil {
 		return err
 	}
-	r.Lock()
+	r.cache.Lock()
 	r.cache.userCache[user.ID] = dbObj.ID
-	defer r.Unlock()
+	defer r.cache.Unlock()
 
 	return nil
 }
