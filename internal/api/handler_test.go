@@ -223,16 +223,16 @@ func (g *GoSaveBatch) CheckDeleted() error {
 
 func TestHandler_BatchDelete(t *testing.T) {
 
-	// tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable")
-	// require.NoError(t, err)
-	// time.Sleep(5 * time.Second)
-
-	// defer func() {
-	// 	fmt.Printf("deffer run %v\n", 4)
-
-	// 	tstSt.DropAll()
-	// 	tstSt.Close()
-	// }()
+	//tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@192.168.1.15:5432/tst_00?sslmode=disable")
+	//require.NoError(t, err)
+	//time.Sleep(5 * time.Second)
+	//
+	//defer func() {
+	//	fmt.Printf("deffer run %v\n", 4)
+	//
+	//	tstSt.DropAll()
+	//	tstSt.Close()
+	//}()
 
 	tstSt, err := infile.NewFileStorage("")
 	require.NoError(t, err)
@@ -244,7 +244,7 @@ func TestHandler_BatchDelete(t *testing.T) {
 
 	for j := 0; j < workersCount; j++ {
 		g.Go(func() error {
-			saveBatchItem := GoSaveBatch{r: NewRouter(h), count: 34}
+			saveBatchItem := GoSaveBatch{r: NewRouter(h), count: 11}
 			if err := saveBatchItem.SaveBatch(); err != nil {
 				return err
 			}

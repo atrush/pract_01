@@ -30,8 +30,12 @@ type shortURLRepository struct {
 	db              *sql.DB
 	insertBuffer    URLBuffer
 	deleteChan      chan schema.ShortURL
-	flushDeleteChan chan schema.ShortURL
+	flushDeleteChan chan struct{}
 }
+
+const (
+	delBuffBatch = 10
+)
 
 // New postgress URL repository
 func newShortURLRepository(db *sql.DB) *shortURLRepository {
@@ -40,8 +44,8 @@ func newShortURLRepository(db *sql.DB) *shortURLRepository {
 		insertBuffer: URLBuffer{
 			buf: make([]model.ShortURL, 0, 100),
 		},
-		deleteChan:      make(chan schema.ShortURL),
-		flushDeleteChan: make(chan schema.ShortURL),
+		deleteChan:      make(chan schema.ShortURL, delBuffBatch),
+		flushDeleteChan: make(chan struct{}),
 	}
 	repo.initDeleteBatchWorker()
 
@@ -51,7 +55,7 @@ func newShortURLRepository(db *sql.DB) *shortURLRepository {
 // Async mark as deleted list of shortIDs
 func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error {
 	if len(shortIDList) == 0 {
-		return errors.New("list to delkete is empty")
+		return nil
 	}
 
 	go func() {
@@ -60,7 +64,7 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 		}
 
 		//run flush on end of list
-		r.flushDeleteChan <- schema.ShortURL{}
+		r.flushDeleteChan <- struct{}{}
 	}()
 
 	return nil
@@ -70,7 +74,7 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 // or when take signal from flushDeleteChan
 func (r *shortURLRepository) initDeleteBatchWorker() {
 	go func() {
-		cache := make([]schema.ShortURL, 0, 10)
+		cache := make([]schema.ShortURL, 0, delBuffBatch)
 		for {
 			select {
 			// read URL to delete from deleteChan
@@ -89,7 +93,7 @@ func (r *shortURLRepository) initDeleteBatchWorker() {
 			if err := r.deleteTxURLBatch(cache); err != nil {
 				log.Fatalf("ошибка транзакции удаления очереди URL:%v", err.Error())
 			}
-			cache = make([]schema.ShortURL, 0, 10)
+			cache = make([]schema.ShortURL, 0, delBuffBatch)
 		}
 	}()
 }
@@ -149,13 +153,11 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	return nil
 }
 
-func (r *shortURLRepository) SaveURLBuffFlush() (err error) {
+func (r *shortURLRepository) SaveURLBuffFlush() error {
 	r.insertBuffer.Lock()
 	defer r.insertBuffer.Unlock()
 
-	err = r.saveURLBuffFlushNoLock()
-
-	return
+	return r.saveURLBuffFlushNoLock()
 }
 
 // Save ShorURLs stored in bufferr to db
@@ -183,16 +185,21 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 	for _, sht := range r.insertBuffer.buf {
 		var dbObj schema.ShortURL
 		dbObj, err = schema.NewURLFromCanonical(sht)
-
-		if err == nil {
-			if err = stmt.QueryRow(dbObj.ID, dbObj.UserID, dbObj.URL, dbObj.ShortID, dbObj.IsDeleted).Scan(&dbObj.ID); err != nil {
-				err = fmt.Errorf("ошибка транзакции сохранения dbObj- %v :%w ", dbObj.UserID.String(), err)
-				return
-			}
-			sht.ID = dbObj.ID
+		if err != nil {
 			continue
 		}
 
+		if err = stmt.QueryRow(
+			dbObj.ID,
+			dbObj.UserID,
+			dbObj.URL,
+			dbObj.ShortID,
+			dbObj.IsDeleted).Scan(&dbObj.ID); err != nil {
+			err = fmt.Errorf("ошибка транзакции сохранения dbObj- %v :%w ", dbObj.UserID.String(), err)
+
+			return
+		}
+		sht.ID = dbObj.ID
 	}
 
 	if err = tx.Commit(); err != nil {
