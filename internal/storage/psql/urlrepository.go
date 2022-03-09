@@ -203,15 +203,12 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 }
 
 // Save URL to db
-func (r *shortURLRepository) SaveURL(ctx context.Context, sht *model.ShortURL) error {
-	if sht == nil {
-		return errors.New("URL is nil")
+func (r *shortURLRepository) SaveURL(ctx context.Context, sht model.ShortURL) (model.ShortURL, error) {
+	dbObj, err := schema.NewURLFromCanonical(sht)
+	if err != nil {
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
 	}
 
-	dbObj, err := schema.NewURLFromCanonical(*sht)
-	if err != nil {
-		return fmt.Errorf("ошибка хранилица:%w", err)
-	}
 	row := r.db.QueryRowContext(
 		ctx,
 		"INSERT INTO urls (id, user_id, srcurl, shorturl, isdeleted) VALUES ($1, $2, $3, $4, $5) RETURNING id ",
@@ -228,10 +225,10 @@ func (r *shortURLRepository) SaveURL(ctx context.Context, sht *model.ShortURL) e
 		if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "urls_srcurl_key" {
 			existURL, err := r.GetShortURLBySrcURL(ctx, sht.URL)
 			if err != nil {
-				return fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
+				return model.ShortURL{}, fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
 					sht.URL, err)
 			}
-			return &shterrors.ErrorConflictSaveURL{
+			return model.ShortURL{}, &shterrors.ErrorConflictSaveURL{
 				Err:           row.Err(),
 				ExistShortURL: existURL.ShortID,
 			}
@@ -239,11 +236,11 @@ func (r *shortURLRepository) SaveURL(ctx context.Context, sht *model.ShortURL) e
 	}
 
 	if err := row.Scan(&dbObj.ID); err != nil {
-		return err
+		return model.ShortURL{}, err
 	}
 
 	sht.ID = dbObj.ID
-	return nil
+	return sht, nil
 }
 
 // Get source URL by shortID from db

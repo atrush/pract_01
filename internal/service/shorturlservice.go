@@ -100,7 +100,8 @@ func (sh *ShortURLService) SaveURL(ctx context.Context, srcURL string, userID uu
 		return "", err
 	}
 
-	if err := sh.db.URL().SaveURL(ctx, &sht); err != nil {
+	sht, err = sh.db.URL().SaveURL(ctx, sht)
+	if err != nil {
 		return "", err
 	}
 

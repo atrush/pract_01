@@ -60,7 +60,13 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("short URL is nil")
 	}
-	return r.SaveURL(context.TODO(), sht)
+
+	dbObj, err := r.SaveURL(context.TODO(), *sht)
+	if err != nil {
+		return err
+	}
+	sht = &dbObj
+	return nil
 }
 
 // Empty imitate flush
@@ -69,32 +75,29 @@ func (r *shortURLRepository) SaveURLBuffFlush() error {
 }
 
 // Save URL
-func (r *shortURLRepository) SaveURL(_ context.Context, sht *model.ShortURL) error {
-	if sht == nil {
-		return errors.New("short URL is nil")
-	}
+func (r *shortURLRepository) SaveURL(_ context.Context, sht model.ShortURL) (model.ShortURL, error) {
 
-	dbObj, err := schema.NewURLFromCanonical(*sht)
+	dbObj, err := schema.NewURLFromCanonical(sht)
 	if err != nil {
-		return fmt.Errorf("ошибка хранилица:%w", err)
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
 	}
 
 	exist, _ := r.Exist(dbObj.ShortID)
 	if exist {
-		return errors.New("shortID уже существует")
+		return model.ShortURL{}, errors.New("shortID уже существует")
 	}
 
 	existSrcURL, _ := r.ExistSrcURL(dbObj.URL)
 	if existSrcURL {
 
-		return &shterrors.ErrorConflictSaveURL{
-			Err:           errors.New("конфлит добавления записи, URL уже существует"),
+		return model.ShortURL{}, &shterrors.ErrorConflictSaveURL{
+			Err:           errors.New("конфликт добавления записи, URL уже существует"),
 			ExistShortURL: r.GetShortURLBySrcURL(dbObj.URL),
 		}
 	}
 
 	if userExist := r.UserExist(sht.UserID); !userExist {
-		return errors.New("пользователь не найден")
+		return model.ShortURL{}, errors.New("пользователь не найден")
 	}
 
 	r.cache.Lock()
@@ -102,7 +105,7 @@ func (r *shortURLRepository) SaveURL(_ context.Context, sht *model.ShortURL) err
 	if r.fileName != "" {
 
 		if err := r.writeToFile(dbObj); err != nil {
-			return err
+			return model.ShortURL{}, err
 		}
 	}
 
@@ -110,7 +113,7 @@ func (r *shortURLRepository) SaveURL(_ context.Context, sht *model.ShortURL) err
 	r.cache.shortURLidx[dbObj.ShortID] = dbObj.ID
 	r.cache.srcURLidx[dbObj.URL] = dbObj.ID
 
-	return nil
+	return sht, nil
 }
 
 // Return stored URL by shortID

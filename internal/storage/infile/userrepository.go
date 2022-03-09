@@ -37,17 +37,14 @@ func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 }
 
 // Add User
-func (r *userRepository) AddUser(_ context.Context, user *model.User) error {
-	if user == nil {
-		return errors.New("user is nil")
-	}
-	dbObj, err := schema.NewUserFromCanonical(*user)
+func (r *userRepository) AddUser(_ context.Context, user model.User) (model.User, error) {
+	dbObj, err := schema.NewUserFromCanonical(user)
 	if err != nil {
-		return err
+		return model.User{}, err
 	}
 	r.cache.Lock()
 	r.cache.userCache[user.ID] = dbObj.ID
 	defer r.cache.Unlock()
 
-	return nil
+	return user, nil
 }

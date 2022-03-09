@@ -16,6 +16,6 @@ type URLShortener interface {
 }
 
 type UserManager interface {
-	AddUser(ctx context.Context) (*model.User, error)
+	AddUser(ctx context.Context) (model.User, error)
 	Exist(ctx context.Context, id uuid.UUID) (bool, error)
 }

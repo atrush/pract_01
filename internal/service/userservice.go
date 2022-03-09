@@ -36,12 +36,12 @@ func (u *UserService) Exist(ctx context.Context, id uuid.UUID) (bool, error) {
 }
 
 // Add new user
-func (u *UserService) AddUser(ctx context.Context) (*model.User, error) {
+func (u *UserService) AddUser(ctx context.Context) (model.User, error) {
 	newUser := model.NewUser()
 
-	if err := u.db.User().AddUser(ctx, &newUser); err != nil {
-		return nil, err
+	newUser, err := u.db.User().AddUser(ctx, newUser)
+	if err != nil {
+		return model.User{}, err
 	}
-
-	return &newUser, nil
+	return newUser, nil
 }

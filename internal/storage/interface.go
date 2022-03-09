@@ -16,7 +16,7 @@ type Storage interface {
 type URLRepository interface {
 	GetURL(ctx context.Context, shortID string) (model.ShortURL, error)
 	GetUserURLList(ctx context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error)
-	SaveURL(ctx context.Context, shURL *model.ShortURL) error
+	SaveURL(ctx context.Context, shURL model.ShortURL) (model.ShortURL, error)
 	Exist(shortID string) (bool, error)
 	SaveURLBuff(shURL *model.ShortURL) error
 	SaveURLBuffFlush() error
@@ -24,6 +24,6 @@ type URLRepository interface {
 }
 
 type UserRepository interface {
-	AddUser(ctx context.Context, user *model.User) error
+	AddUser(ctx context.Context, user model.User) (model.User, error)
 	Exist(userID uuid.UUID) (bool, error)
 }
