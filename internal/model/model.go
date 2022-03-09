@@ -15,8 +15,23 @@ type ShortURL struct {
 	IsDeleted bool      `json:"isdeleted"`
 }
 
+func NewShortURL(srcURL string, userID uuid.UUID) ShortURL {
+	return ShortURL{
+		ID:        uuid.New(),
+		URL:       srcURL,
+		UserID:    userID,
+		IsDeleted: false,
+	}
+}
+
 type User struct {
 	ID uuid.UUID `json:"id" validate:"required"`
+}
+
+func NewUser() User {
+	return User{
+		ID: uuid.New(),
+	}
 }
 
 func (s *ShortURL) Validate() error {
