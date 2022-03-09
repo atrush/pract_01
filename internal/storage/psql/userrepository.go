@@ -1,6 +1,7 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -23,14 +24,15 @@ func newUserRepository(db *sql.DB) *userRepository {
 }
 
 // Add user to db
-func (r *userRepository) AddUser(user *model.User) error {
+func (r *userRepository) AddUser(ctx context.Context, user *model.User) error {
 	if user == nil {
 		return errors.New("user is nil")
 	}
 
 	result := uuid.Nil
 
-	return r.db.QueryRow(
+	return r.db.QueryRowContext(
+		ctx,
 		"INSERT INTO users (id) VALUES ($1) RETURNING id",
 		user.ID,
 	).Scan(&result)

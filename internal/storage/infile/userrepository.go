@@ -1,6 +1,7 @@
 package infile
 
 import (
+	"context"
 	"errors"
 
 	"github.com/atrush/pract_01.git/internal/model"
@@ -36,7 +37,7 @@ func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 }
 
 // Add User
-func (r *userRepository) AddUser(user *model.User) error {
+func (r *userRepository) AddUser(_ context.Context, user *model.User) error {
 	if user == nil {
 		return errors.New("user is nil")
 	}

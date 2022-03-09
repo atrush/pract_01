@@ -2,8 +2,10 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"log"
 	"net/http"
@@ -11,8 +13,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"golang.org/x/sync/errgroup"
 
 	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/service"
@@ -54,10 +54,10 @@ func TestHandler_SaveConflict(t *testing.T) {
 			outBodyExpected:     fmt.Sprintf("{\"result\":\"%v/1xQ6p+JI\"}", cfg.BaseURL),
 			outContTypeExpected: "application/json",
 			initFixtures: func(storage st.Storage) {
-				storage.User().AddUser(&model.User{
+				storage.User().AddUser(context.Background(), &model.User{
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
-				storage.URL().SaveURL(&model.ShortURL{
+				storage.URL().SaveURL(context.Background(), &model.ShortURL{
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://practicum.yandex.ru",
@@ -73,10 +73,10 @@ func TestHandler_SaveConflict(t *testing.T) {
 			outContTypeExpected: "text/plain; charset=utf-8",
 			outBodyExpected:     fmt.Sprintf("%v/1xQ6p+JI", cfg.BaseURL),
 			initFixtures: func(storage st.Storage) {
-				storage.User().AddUser(&model.User{
+				storage.User().AddUser(context.Background(), &model.User{
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
-				storage.URL().SaveURL(&model.ShortURL{
+				storage.URL().SaveURL(context.Background(), &model.ShortURL{
 					ID:      uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID: "1xQ6p+JI",
 					URL:     "https://practicum.yandex.ru/",
@@ -309,11 +309,11 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			contentType:     "application/json",
 			outCodeExpected: 202,
 			initFixtures: func(storage st.Storage) {
-				storage.User().AddUser(&model.User{
+				storage.User().AddUser(context.Background(), &model.User{
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
 				for i := 0; i < 5; i++ {
-					storage.URL().SaveURL(&model.ShortURL{
+					storage.URL().SaveURL(context.Background(), &model.ShortURL{
 						ID:        uuid.New(),
 						ShortID:   fmt.Sprintf("url%v", i),
 						URL:       fmt.Sprintf("https://practicum.yandex.ru/%v", i),
@@ -344,7 +344,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			body:            "https://practicum.yandex.ru/",
 			outCodeExpected: 201,
 			initFixtures: func(storage st.Storage) {
-				storage.URL().SaveURL(&model.ShortURL{
+				storage.URL().SaveURL(context.Background(), &model.ShortURL{
 					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID:   "1xQ6p+JI",
 					URL:       "https://practicum.yandex.ru/",
@@ -364,10 +364,10 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/1xQ6p+JI",
 			outCodeExpected: 307,
 			initFixtures: func(storage st.Storage) {
-				storage.User().AddUser(&model.User{
+				storage.User().AddUser(context.Background(), &model.User{
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
-				storage.URL().SaveURL(&model.ShortURL{
+				storage.URL().SaveURL(context.Background(), &model.ShortURL{
 					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID:   "1xQ6p+JI",
 					URL:       "https://practicum.yandex.ru/",
@@ -381,10 +381,10 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			url:             "/1xQ6p+JI",
 			outCodeExpected: 410,
 			initFixtures: func(storage st.Storage) {
-				storage.User().AddUser(&model.User{
+				storage.User().AddUser(context.Background(), &model.User{
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
-				storage.URL().SaveURL(&model.ShortURL{
+				storage.URL().SaveURL(context.Background(), &model.ShortURL{
 					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID:   "1xQ6p+JI",
 					URL:       "https://practicum.yandex.ru/",
@@ -442,10 +442,10 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 			outCodeExpected:     201,
 			outContTypeExpected: "application/json",
 			initFixtures: func(storage st.Storage) {
-				storage.User().AddUser(&model.User{
+				storage.User().AddUser(context.Background(), &model.User{
 					ID: uuid.MustParse("34e693a6-78e5-4a2f-a6bb-2fad5da50de1"),
 				})
-				storage.URL().SaveURL(&model.ShortURL{
+				storage.URL().SaveURL(context.Background(), &model.ShortURL{
 					ID:        uuid.MustParse("49dad1e7-983a-4101-a991-aa0e9523a3b1"),
 					ShortID:   "1xQ6p+JI",
 					IsDeleted: false,

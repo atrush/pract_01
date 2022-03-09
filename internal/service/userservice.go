@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 
 	"github.com/atrush/pract_01.git/internal/model"
@@ -26,7 +27,7 @@ func NewUserService(db storage.Storage) (*UserService, error) {
 }
 
 // Check user is exist
-func (u *UserService) Exist(id uuid.UUID) (bool, error) {
+func (u *UserService) Exist(ctx context.Context, id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, errors.New("ошибка проверки существования user: uuid nil")
 	}
@@ -35,12 +36,12 @@ func (u *UserService) Exist(id uuid.UUID) (bool, error) {
 }
 
 // Add new user
-func (u *UserService) AddUser() (*model.User, error) {
+func (u *UserService) AddUser(ctx context.Context) (*model.User, error) {
 	newUser := model.User{
 		ID: uuid.New(),
 	}
 
-	if err := u.db.User().AddUser(&newUser); err != nil {
+	if err := u.db.User().AddUser(ctx, &newUser); err != nil {
 		return nil, err
 	}
 

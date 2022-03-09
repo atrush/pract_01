@@ -1,6 +1,7 @@
 package infile
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -36,7 +37,7 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 		return nil
 	}
 	for _, v := range shortIDList {
-		sht, _ := r.GetURL(v)
+		sht, _ := r.GetURL(nil, v)
 		if sht != (model.ShortURL{}) {
 			if sht.UserID == userID && !sht.IsDeleted {
 				sht.IsDeleted = true
@@ -59,7 +60,7 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("short URL is nil")
 	}
-	return r.SaveURL(sht)
+	return r.SaveURL(nil, sht)
 }
 
 // Empty imitate flush
@@ -68,7 +69,7 @@ func (r *shortURLRepository) SaveURLBuffFlush() error {
 }
 
 // Save URL
-func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
+func (r *shortURLRepository) SaveURL(_ context.Context, sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("short URL is nil")
 	}
@@ -113,7 +114,7 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 }
 
 // Return stored URL by shortID
-func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
+func (r *shortURLRepository) GetURL(_ context.Context, shortID string) (model.ShortURL, error) {
 	if shortID == "" {
 		return model.ShortURL{}, errors.New("нельзя использовать пустой id")
 	}
@@ -149,7 +150,7 @@ func (r *shortURLRepository) GetShortURLBySrcURL(url string) string {
 }
 
 // Get array of URL for user
-func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]model.ShortURL, error) {
+func (r *shortURLRepository) GetUserURLList(_ context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error) {
 	r.cache.RLock()
 	defer r.cache.RUnlock()
 

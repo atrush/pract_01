@@ -31,8 +31,7 @@ func NewHandler(shtSvc service.URLShortener, authSvc service.UserManager, baseUR
 
 // Check db connection
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
-
-	if err := h.svc.Ping(); err != nil {
+	if err := h.svc.Ping(r.Context()); err != nil {
 		h.serverError(w, err.Error())
 		return
 	}
@@ -117,7 +116,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlList, err := h.svc.GetUserURLList(userID)
+	urlList, err := h.svc.GetUserURLList(r.Context(), userID)
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -168,7 +167,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 
 	// save to db and get shortID
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.SaveURL(incoming.SrcURL, userID)
+	shortID, err := h.svc.SaveURL(r.Context(), incoming.SrcURL, userID)
 
 	// handle conflict Add
 	isConflict := false
@@ -226,7 +225,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.SaveURL(string(srcURL), userID)
+	shortID, err := h.svc.SaveURL(r.Context(), string(srcURL), userID)
 
 	// handle conflict Add
 	isConflict := false
@@ -257,7 +256,7 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedURL, err := h.svc.GetURL(shortID)
+	storedURL, err := h.svc.GetURL(r.Context(), shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return

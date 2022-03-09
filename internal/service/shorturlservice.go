@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -74,8 +75,8 @@ func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) 
 }
 
 // Return array stored URLs by user UUID
-func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]model.ShortURL, error) {
-	list, err := sh.db.URL().GetUserURLList(userID, 100)
+func (sh *ShortURLService) GetUserURLList(ctx context.Context, userID uuid.UUID) ([]model.ShortURL, error) {
+	list, err := sh.db.URL().GetUserURLList(ctx, userID, 100)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +85,8 @@ func (sh *ShortURLService) GetUserURLList(userID uuid.UUID) ([]model.ShortURL, e
 }
 
 // Return stored URL by shortID
-func (sh *ShortURLService) GetURL(shortID string) (model.ShortURL, error) {
-	longURL, err := sh.db.URL().GetURL(shortID)
+func (sh *ShortURLService) GetURL(ctx context.Context, shortID string) (model.ShortURL, error) {
+	longURL, err := sh.db.URL().GetURL(ctx, shortID)
 	if err != nil {
 		return model.ShortURL{}, err
 	}
@@ -94,7 +95,7 @@ func (sh *ShortURLService) GetURL(shortID string) (model.ShortURL, error) {
 }
 
 // Save URL for user, return shortID
-func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, error) {
+func (sh *ShortURLService) SaveURL(ctx context.Context, srcURL string, userID uuid.UUID) (string, error) {
 
 	sht := model.ShortURL{
 		ID:        uuid.New(),
@@ -108,7 +109,7 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, err
 		return "", err
 	}
 
-	if err := sh.db.URL().SaveURL(&sht); err != nil {
+	if err := sh.db.URL().SaveURL(ctx, &sht); err != nil {
 		return "", err
 	}
 
@@ -116,7 +117,7 @@ func (sh *ShortURLService) SaveURL(srcURL string, userID uuid.UUID) (string, err
 }
 
 // Check db connection
-func (sh *ShortURLService) Ping() error {
+func (sh *ShortURLService) Ping(ctx context.Context) error {
 	return sh.db.Ping()
 }
 

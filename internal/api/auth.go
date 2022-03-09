@@ -56,7 +56,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 		}
 
 		//check user
-		exist, err := a.svc.Exist(id)
+		exist, err := a.svc.Exist(r.Context(), id)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
 		}
@@ -66,7 +66,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 		}
 	}
 
-	newUserUUID, newUserToken, err := a.newUser()
+	newUserUUID, newUserToken, err := a.newUser(r.Context())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
 	}
@@ -84,8 +84,8 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 }
 
 // Add new user to storage, return UUID and token
-func (a *Auth) newUser() (uuid.UUID, string, error) {
-	newUser, err := a.svc.AddUser()
+func (a *Auth) newUser(ctx context.Context) (uuid.UUID, string, error) {
+	newUser, err := a.svc.AddUser(ctx)
 	if err == nil {
 		token, err := a.crypt.EncodeUUID(newUser.ID)
 		if err == nil {

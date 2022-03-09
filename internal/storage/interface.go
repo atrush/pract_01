@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/google/uuid"
 )
@@ -13,16 +14,16 @@ type Storage interface {
 }
 
 type URLRepository interface {
-	GetURL(shortID string) (model.ShortURL, error)
-	GetUserURLList(userID uuid.UUID, limit int) ([]model.ShortURL, error)
-	SaveURL(*model.ShortURL) error
-	SaveURLBuff(*model.ShortURL) error
+	GetURL(ctx context.Context, shortID string) (model.ShortURL, error)
+	GetUserURLList(ctx context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error)
+	SaveURL(ctx context.Context, shURL *model.ShortURL) error
+	Exist(shortID string) (bool, error)
+	SaveURLBuff(shURL *model.ShortURL) error
 	SaveURLBuffFlush() error
 	DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error
-	Exist(shortID string) (bool, error)
 }
 
 type UserRepository interface {
-	AddUser(*model.User) error
+	AddUser(ctx context.Context, user *model.User) error
 	Exist(userID uuid.UUID) (bool, error)
 }

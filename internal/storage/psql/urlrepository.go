@@ -1,6 +1,7 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -202,7 +203,7 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 }
 
 // Save URL to db
-func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
+func (r *shortURLRepository) SaveURL(ctx context.Context, sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("URL is nil")
 	}
@@ -211,7 +212,8 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 	if err != nil {
 		return fmt.Errorf("ошибка хранилица:%w", err)
 	}
-	row := r.db.QueryRow(
+	row := r.db.QueryRowContext(
+		ctx,
 		"INSERT INTO urls (id, user_id, srcurl, shorturl, isdeleted) VALUES ($1, $2, $3, $4, $5) RETURNING id ",
 		dbObj.ID,
 		dbObj.UserID,
@@ -224,7 +226,7 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 		// check duplicate srcurl
 		pqErr, ok := row.Err().(*pq.Error)
 		if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "urls_srcurl_key" {
-			existURL, err := r.GetShortURLBySrcURL(sht.URL)
+			existURL, err := r.GetShortURLBySrcURL(ctx, sht.URL)
 			if err != nil {
 				return fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
 					sht.URL, err)
@@ -245,7 +247,7 @@ func (r *shortURLRepository) SaveURL(sht *model.ShortURL) error {
 }
 
 // Get source URL by shortID from db
-func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
+func (r *shortURLRepository) GetURL(ctx context.Context, shortID string) (model.ShortURL, error) {
 	dbObj := schema.ShortURL{}
 	err := r.db.QueryRow(
 		"select id, user_id, srcurl, shorturl, isdeleted from urls where shorturl = $1", shortID,
@@ -259,7 +261,7 @@ func (r *shortURLRepository) GetURL(shortID string) (model.ShortURL, error) {
 }
 
 // Get source URL by shortID from db
-func (r *shortURLRepository) GetShortURLBySrcURL(url string) (model.ShortURL, error) {
+func (r *shortURLRepository) GetShortURLBySrcURL(ctx context.Context, url string) (model.ShortURL, error) {
 	dbObj := schema.ShortURL{}
 	err := r.db.QueryRow(
 		"select id, user_id, srcurl, shorturl, isdeleted from urls where srcurl = $1", url,
@@ -273,11 +275,12 @@ func (r *shortURLRepository) GetShortURLBySrcURL(url string) (model.ShortURL, er
 }
 
 // Get users urls by user id
-func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]model.ShortURL, error) {
+func (r *shortURLRepository) GetUserURLList(ctx context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error) {
 	var userURLs schema.URLList
 	userURLs = make([]schema.ShortURL, 0, limit)
 
-	rows, err := r.db.Query(
+	rows, err := r.db.QueryContext(
+		ctx,
 		"SELECT id, user_id, srcurl, shorturl, isdeleted from urls WHERE user_id = $1 LIMIT $2", userID, limit)
 	if err != nil {
 		return nil, err
