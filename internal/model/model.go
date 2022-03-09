@@ -34,7 +34,7 @@ func NewUser() User {
 	}
 }
 
-func (s *ShortURL) Validate() error {
+func (s ShortURL) Validate() error {
 	validate := validator.New()
 
 	if err := validate.Struct(s); err != nil {
@@ -44,7 +44,7 @@ func (s *ShortURL) Validate() error {
 	return nil
 }
 
-func (u *User) Validate() error {
+func (u User) Validate() error {
 	validate := validator.New()
 
 	if err := validate.Struct(u); err != nil {
