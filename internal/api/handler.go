@@ -50,12 +50,16 @@ func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserIDFromContext(r)
-	if userID != uuid.Nil {
-		if err := h.svc.DeleteURLList(userID, batch...); err != nil {
-			h.serverError(w, err.Error())
+	if userID == uuid.Nil {
+		h.serverError(w, "User ID is empty")
 
-			return
-		}
+		return
+	}
+
+	if err := h.svc.DeleteURLList(userID, batch...); err != nil {
+		h.serverError(w, err.Error())
+
+		return
 	}
 
 	w.Header().Set("content-type", "text/plain")
