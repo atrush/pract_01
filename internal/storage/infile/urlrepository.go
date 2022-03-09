@@ -37,7 +37,7 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 		return nil
 	}
 	for _, v := range shortIDList {
-		sht, _ := r.GetURL(nil, v)
+		sht, _ := r.GetURL(context.TODO(), v)
 		if sht != (model.ShortURL{}) {
 			if sht.UserID == userID && !sht.IsDeleted {
 				sht.IsDeleted = true
@@ -60,7 +60,7 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("short URL is nil")
 	}
-	return r.SaveURL(nil, sht)
+	return r.SaveURL(context.TODO(), sht)
 }
 
 // Empty imitate flush
