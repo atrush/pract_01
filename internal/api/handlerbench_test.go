@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/atrush/pract_01.git/internal/service"
-	"github.com/atrush/pract_01.git/internal/storage/psql"
+	"github.com/atrush/pract_01.git/internal/storage/infile"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"net/http"
@@ -106,8 +106,8 @@ func initBenchHandler(b *testing.B) (*chi.Mux, *httptest.ResponseRecorder, *http
 	b.StopTimer() // останавливаем таймер
 
 	// init db
-	//db, err := infile.NewFileStorage("")
-	db, err := psql.NewTestStorage("postgres://postgres:hjvfirb@192.168.1.15:5432/tst_00?sslmode=disable")
+	db, err := infile.NewFileStorage("")
+	//db, err := psql.NewTestStorage("postgres://postgres:hjvfirb@192.168.1.15:5432/tst_00?sslmode=disable")
 
 	if err != nil {
 		return nil, nil, nil, err
