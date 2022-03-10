@@ -13,7 +13,7 @@ import (
 type (
 	Auth struct {
 		crypt AuthCrypt
-		svc   service.Servicer
+		svc   service.UserManager
 	}
 	contextKey string
 )
@@ -22,8 +22,8 @@ var (
 	ContextKeyUserID = contextKey("user-id")
 )
 
-func NewAuth(svc service.Servicer) *Auth {
-	return &Auth{
+func NewAuth(svc service.UserManager) Auth {
+	return Auth{
 		crypt: *NewAuthCrypt(),
 		svc:   svc,
 	}
@@ -56,7 +56,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 		}
 
 		//check user
-		exist, err := a.svc.User().Exist(id)
+		exist, err := a.svc.Exist(r.Context(), id)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
 		}
@@ -66,7 +66,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 		}
 	}
 
-	newUserUUID, newUserToken, err := a.newUser()
+	newUserUUID, newUserToken, err := a.newUser(r.Context())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
 	}
@@ -84,8 +84,8 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 }
 
 // Add new user to storage, return UUID and token
-func (a *Auth) newUser() (uuid.UUID, string, error) {
-	newUser, err := a.svc.User().AddUser()
+func (a *Auth) newUser(ctx context.Context) (uuid.UUID, string, error) {
+	newUser, err := a.svc.AddUser(ctx)
 	if err == nil {
 		token, err := a.crypt.EncodeUUID(newUser.ID)
 		if err == nil {

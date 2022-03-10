@@ -1,21 +1,22 @@
 package infile
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"sync"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/shterrors"
 	st "github.com/atrush/pract_01.git/internal/storage"
+	"github.com/atrush/pract_01.git/internal/storage/schema"
 	"github.com/google/uuid"
 )
 
 var _ st.URLRepository = (*shortURLRepository)(nil)
 
 type shortURLRepository struct {
-	cache    cache
+	cache    *cache
 	fileName string
-	sync.RWMutex
 }
 
 // Init new repository
@@ -25,13 +26,47 @@ func newShortURLRepository(c *cache, fileName string) (*shortURLRepository, erro
 	}
 
 	return &shortURLRepository{
-		cache:    *c,
+		cache:    c,
 		fileName: fileName,
 	}, nil
 }
 
-func (r *shortURLRepository) SaveURLBuff(sht *st.ShortURL) error {
-	return r.SaveURL(sht)
+// Delete batch of URLs for user
+func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error {
+	if len(shortIDList) == 0 {
+		return nil
+	}
+	for _, v := range shortIDList {
+		sht, _ := r.GetURL(context.TODO(), v)
+		if sht != (model.ShortURL{}) {
+			if sht.UserID == userID && !sht.IsDeleted {
+				sht.IsDeleted = true
+				toAdd, err := schema.NewURLFromCanonical(sht)
+				if err != nil {
+					return fmt.Errorf("ошибка обновления запси: %w", err)
+				}
+
+				r.cache.Lock()
+				r.cache.urlCache[sht.ID] = toAdd
+				r.cache.Unlock()
+			}
+
+		}
+	}
+	return nil
+}
+
+func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
+	if sht == nil {
+		return errors.New("short URL is nil")
+	}
+
+	dbObj, err := r.SaveURL(context.TODO(), *sht)
+	if err != nil {
+		return err
+	}
+	sht = &dbObj
+	return nil
 }
 
 // Empty imitate flush
@@ -40,123 +75,137 @@ func (r *shortURLRepository) SaveURLBuffFlush() error {
 }
 
 // Save URL
-func (r *shortURLRepository) SaveURL(sht *st.ShortURL) error {
-	if err := sht.Validate(); err != nil {
-		return err
+func (r *shortURLRepository) SaveURL(_ context.Context, sht model.ShortURL) (model.ShortURL, error) {
+
+	dbObj, err := schema.NewURLFromCanonical(sht)
+	if err != nil {
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
 	}
 
-	exist, _ := r.Exist(sht.ShortID)
+	exist, _ := r.Exist(dbObj.ShortID)
 	if exist {
-		return errors.New("shortID уже существует")
+		return model.ShortURL{}, errors.New("shortID уже существует")
 	}
 
-	existSrcURL, _ := r.ExistSrcURL(sht.URL)
+	existSrcURL, _ := r.ExistSrcURL(dbObj.URL)
 	if existSrcURL {
 
-		return &shterrors.ErrorConflictSaveURL{
-			Err:           errors.New("конфлит добавления записи, URL уже существует"),
-			ExistShortURL: r.GetShortURLBySrcURL(sht.URL),
+		return model.ShortURL{}, &shterrors.ErrorConflictSaveURL{
+			Err:           errors.New("конфликт добавления записи, URL уже существует"),
+			ExistShortURL: r.GetShortURLBySrcURL(dbObj.URL),
 		}
 	}
 
-	_, userExist := r.cache.userCache[sht.UserID]
-	if sht.UserID != uuid.Nil && !userExist {
-		return errors.New("пользователь не найден")
+	if userExist := r.UserExist(sht.UserID); !userExist {
+		return model.ShortURL{}, errors.New("пользователь не найден")
 	}
 
+	r.cache.Lock()
+	defer r.cache.Unlock()
 	if r.fileName != "" {
-		r.Lock()
-		if err := r.writeToFile(*sht); err != nil {
-			return err
+
+		if err := r.writeToFile(dbObj); err != nil {
+			return model.ShortURL{}, err
 		}
-		defer r.Unlock()
 	}
 
-	r.cache.urlCache[sht.ID] = *sht
-	r.cache.shortURLidx[sht.ShortID] = sht.ID
-	r.cache.srcURLidx[sht.URL] = sht.ID
+	r.cache.urlCache[dbObj.ID] = dbObj
+	r.cache.shortURLidx[dbObj.ShortID] = dbObj.ID
+	r.cache.srcURLidx[dbObj.URL] = dbObj.ID
 
-	return nil
+	return sht, nil
 }
 
 // Return stored URL by shortID
-func (r *shortURLRepository) GetURL(shortID string) (string, error) {
+func (r *shortURLRepository) GetURL(_ context.Context, shortID string) (model.ShortURL, error) {
 	if shortID == "" {
-		return "", errors.New("нельзя использовать пустой id")
+		return model.ShortURL{}, errors.New("нельзя использовать пустой id")
 	}
 
-	r.RLock()
+	r.cache.RLock()
 	idx, ok := r.cache.shortURLidx[shortID]
-	if ok {
+	defer r.cache.RUnlock()
 
+	if ok {
 		item, ok := r.cache.urlCache[idx]
 		if ok {
-			return item.URL, nil
+			return item.ToCanonical()
 		}
-		defer r.RUnlock()
 	}
 
-	return "", nil
+	return model.ShortURL{}, nil
 }
 
 // Return stored shortID by srcURL
 func (r *shortURLRepository) GetShortURLBySrcURL(url string) string {
-	r.RLock()
+	r.cache.RLock()
 	id, ok := r.cache.srcURLidx[url]
+	defer r.cache.RUnlock()
+
 	if ok {
 		sht, okSht := r.cache.urlCache[id]
 		if okSht {
 			return sht.ShortID
 		}
 	}
-	defer r.RUnlock()
 
 	return ""
 }
 
 // Get array of URL for user
-func (r *shortURLRepository) GetUserURLList(userID uuid.UUID, limit int) ([]st.ShortURL, error) {
+func (r *shortURLRepository) GetUserURLList(_ context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error) {
+	r.cache.RLock()
+	defer r.cache.RUnlock()
+
 	if len(r.cache.urlCache) == 0 {
 		return nil, nil
 	}
-
-	userURLs := make([]st.ShortURL, 0, limit)
+	var dbURLs schema.URLList
+	dbURLs = make([]schema.ShortURL, 0, limit)
 	for _, v := range r.cache.urlCache {
 		if v.UserID != uuid.Nil && v.UserID == userID {
-			userURLs = append(userURLs, v)
-			if len(userURLs) == limit {
+			dbURLs = append(dbURLs, v)
+			if len(dbURLs) == limit {
 				break
 			}
 		}
 	}
 
-	if len(userURLs) == 0 {
+	if len(dbURLs) == 0 {
 		return nil, nil
 	}
 
-	return userURLs, nil
+	return dbURLs.ToCanonical()
+}
+
+// Check user exist
+func (r *shortURLRepository) UserExist(userID uuid.UUID) bool {
+	r.cache.RLock()
+	_, userExist := r.cache.userCache[userID]
+	defer r.cache.RUnlock()
+	return userExist
 }
 
 // Check shortID not exist
 func (r *shortURLRepository) Exist(shortID string) (bool, error) {
-	r.RLock()
+	r.cache.RLock()
 	_, ok := r.cache.shortURLidx[shortID]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	return ok, nil
 }
 
 // Check shortID not exist
 func (r *shortURLRepository) ExistSrcURL(url string) (bool, error) {
-	r.RLock()
+	r.cache.RLock()
 	_, ok := r.cache.srcURLidx[url]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	return ok, nil
 }
 
 // Write item to file
-func (r *shortURLRepository) writeToFile(sht st.ShortURL) error {
+func (r *shortURLRepository) writeToFile(sht schema.ShortURL) error {
 	fileWriter, err := newFileWriter(r.fileName)
 	if err != nil {
 		return fmt.Errorf("ошибка записи в хранилище: %w", err)

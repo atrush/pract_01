@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"errors"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
 )
@@ -14,7 +16,7 @@ type UserService struct {
 }
 
 // New user service
-func newUserService(db storage.Storage) (*UserService, error) {
+func NewUserService(db storage.Storage) (*UserService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
 	}
@@ -25,7 +27,7 @@ func newUserService(db storage.Storage) (*UserService, error) {
 }
 
 // Check user is exist
-func (u *UserService) Exist(id uuid.UUID) (bool, error) {
+func (u *UserService) Exist(ctx context.Context, id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, errors.New("ошибка проверки существования user: uuid nil")
 	}
@@ -34,14 +36,12 @@ func (u *UserService) Exist(id uuid.UUID) (bool, error) {
 }
 
 // Add new user
-func (u *UserService) AddUser() (*storage.User, error) {
-	newUser := storage.User{
-		ID: uuid.New(),
-	}
+func (u *UserService) AddUser(ctx context.Context) (model.User, error) {
+	newUser := model.NewUser()
 
-	if err := u.db.User().AddUser(&newUser); err != nil {
-		return nil, err
+	newUser, err := u.db.User().AddUser(ctx, newUser)
+	if err != nil {
+		return model.User{}, err
 	}
-
-	return &newUser, nil
+	return newUser, nil
 }

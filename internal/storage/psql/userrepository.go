@@ -1,8 +1,9 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
-
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
 	"github.com/google/uuid"
 )
@@ -21,13 +22,18 @@ func newUserRepository(db *sql.DB) *userRepository {
 }
 
 // Add user to db
-func (r *userRepository) AddUser(user *storage.User) error {
-	result := uuid.Nil
-
-	return r.db.QueryRow(
+func (r *userRepository) AddUser(ctx context.Context, user model.User) (model.User, error) {
+	err := r.db.QueryRowContext(
+		ctx,
 		"INSERT INTO users (id) VALUES ($1) RETURNING id",
 		user.ID,
-	).Scan(&result)
+	).Scan(&user.ID)
+
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return user, nil
 }
 
 // Check userID exist

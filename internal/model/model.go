@@ -1,0 +1,55 @@
+package model
+
+import (
+	"fmt"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+)
+
+type ShortURL struct {
+	ID        uuid.UUID `json:"id"`
+	ShortID   string    `json:"shortid" validate:"required"`
+	URL       string    `json:"url" validate:"required,url,max=2048"`
+	UserID    uuid.UUID `json:"userid" validate:"required"`
+	IsDeleted bool      `json:"isdeleted"`
+}
+
+func NewShortURL(srcURL string, userID uuid.UUID) ShortURL {
+	return ShortURL{
+		ID:        uuid.New(),
+		URL:       srcURL,
+		UserID:    userID,
+		IsDeleted: false,
+	}
+}
+
+type User struct {
+	ID uuid.UUID `json:"id" validate:"required"`
+}
+
+func NewUser() User {
+	return User{
+		ID: uuid.New(),
+	}
+}
+
+func (s ShortURL) Validate() error {
+	validate := validator.New()
+
+	if err := validate.Struct(s); err != nil {
+		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
+	}
+
+	return nil
+}
+
+func (u User) Validate() error {
+	validate := validator.New()
+
+	if err := validate.Struct(u); err != nil {
+		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
+	}
+
+	return nil
+}

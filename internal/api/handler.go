@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/service"
 	"github.com/atrush/pract_01.git/internal/shterrors"
 	"github.com/go-chi/chi/v5"
@@ -14,24 +15,23 @@ import (
 )
 
 type Handler struct {
-	auth    *Auth
-	svc     service.Servicer
+	auth    Auth
+	svc     service.URLShortener
 	baseURL string
 }
 
 // Return new handler
-func NewHandler(svc service.Servicer, baseURL string) (*Handler, error) {
+func NewHandler(shtSvc service.URLShortener, authSvc service.UserManager, baseURL string) (*Handler, error) {
 	return &Handler{
-		svc:     svc,
+		svc:     shtSvc,
 		baseURL: baseURL,
-		auth:    NewAuth(svc),
+		auth:    NewAuth(authSvc),
 	}, nil
 }
 
 // Check db connection
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
-
-	if err := h.svc.Ping(); err != nil {
+	if err := h.svc.Ping(r.Context()); err != nil {
 		h.serverError(w, err.Error())
 		return
 	}
@@ -39,14 +39,34 @@ func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Save batch of URLs
-func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
-	ct := r.Header.Get("Content-Type")
+// Mark batch of URLs as deleted
+func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
+	var batch BatchDeleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 
-	if ct != "application/json" {
-		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
 		return
 	}
+
+	userID := h.getUserIDFromContext(r)
+	if userID == uuid.Nil {
+		h.serverError(w, "User ID is empty")
+
+		return
+	}
+
+	if err := h.svc.DeleteURLList(userID, batch...); err != nil {
+		h.serverError(w, err.Error())
+
+		return
+	}
+
+	w.Header().Set("content-type", "text/plain")
+	w.WriteHeader(http.StatusAccepted)
+}
+
+// Save batch of URLs
+func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 
 	//read batch
 	var batch []BatchRequest
@@ -60,37 +80,27 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 	//make map id[url] to add
 	listToAdd := make(map[string]string, len(batch))
 	for _, batchEl := range batch {
-		if _, exist := listToAdd[batchEl.ID]; exist {
-			h.badRequestError(w, "в переданном массиве есть повторяющиеся идентифиакторы")
-
-			return
-		}
 		listToAdd[batchEl.ID] = batchEl.URL
 	}
 
 	userID := h.getUserIDFromContext(r)
 
 	//save mp to db, values in map updates to shortURL
-	if err := h.svc.URL().SaveURLList(listToAdd, userID); err != nil {
+	if err := h.svc.SaveURLList(listToAdd, userID); err != nil {
 		h.serverError(w, err.Error())
 
 		return
 	}
 
-	//make response arr
-	var respArr []BatchResponse
-	for k, v := range listToAdd {
-		respArr = append(respArr, BatchResponse{
-			ID:       k,
-			ShortURL: h.baseURL + "/" + v,
-		})
-	}
-
-	//serialize
+	//serialize response
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "   ")
-	encoder.Encode(respArr)
+	if err := encoder.Encode(NewBatchListResponseFromMap(listToAdd, h.baseURL)); err != nil {
+		h.serverError(w, err.Error())
+
+		return
+	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -106,7 +116,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlList, err := h.svc.URL().GetUserURLList(userID)
+	urlList, err := h.svc.GetUserURLList(r.Context(), userID)
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -122,15 +132,7 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseArr := make([]ShortenListResponse, 0, len(urlList))
-	for _, v := range urlList {
-		responseArr = append(responseArr, ShortenListResponse{
-			ShortURL: h.baseURL + "/" + v.ShortID,
-			SrcURL:   v.URL,
-		})
-	}
-
-	jsResult, err := json.Marshal(responseArr)
+	jsResult, err := json.Marshal(NewShortenListResponseFromCanonical(urlList, h.baseURL))
 	if err != nil {
 		h.serverError(w, err.Error())
 		return
@@ -144,11 +146,6 @@ func (h *Handler) GetUserUrls(w http.ResponseWriter, r *http.Request) {
 // Save URL with JSON request
 func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 	// read incoming ShortenRequest
-	ct := r.Header.Get("Content-Type")
-	if ct != "application/json" {
-		h.unsupportedMediaTypeError(w, "Разрешены запросы только в формате JSON!")
-		return
-	}
 
 	jsBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -170,7 +167,7 @@ func (h *Handler) SaveURLJSONHandler(w http.ResponseWriter, r *http.Request) {
 
 	// save to db and get shortID
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.URL().SaveURL(incoming.SrcURL, userID)
+	shortID, err := h.svc.SaveURL(r.Context(), incoming.SrcURL, userID)
 
 	// handle conflict Add
 	isConflict := false
@@ -228,7 +225,7 @@ func (h *Handler) SaveURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := h.getUserIDFromContext(r)
-	shortID, err := h.svc.URL().SaveURL(string(srcURL), userID)
+	shortID, err := h.svc.SaveURL(r.Context(), string(srcURL), userID)
 
 	// handle conflict Add
 	isConflict := false
@@ -259,27 +256,37 @@ func (h *Handler) GetURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	longURL, err := h.svc.URL().GetURL(shortID)
+	storedURL, err := h.svc.GetURL(r.Context(), shortID)
 	if err != nil {
 		h.badRequestError(w, err.Error())
 		return
 	}
 
-	if longURL == "" {
+	if storedURL == (model.ShortURL{}) {
 		h.notFoundError(w)
 		return
 	}
 
+	if storedURL.IsDeleted {
+		w.Header().Set("content-type", "text/plain")
+		w.WriteHeader(http.StatusGone)
+		return
+	}
+
 	w.Header().Set("content-type", "text/plain")
-	w.Header().Set("Location", longURL)
+	w.Header().Set("Location", storedURL.URL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
+
 }
 
 // Get user UUID from context
 func (h *Handler) getUserIDFromContext(r *http.Request) uuid.UUID {
-	ctxID := r.Context().Value(ContextKeyUserID).(string)
-	userUUID, err := uuid.Parse(ctxID)
+	ctxID := r.Context().Value(ContextKeyUserID)
+	if ctxID == nil {
+		return uuid.Nil
+	}
 
+	userUUID, err := uuid.Parse(ctxID.(string))
 	if err == nil {
 		return userUUID
 	}
@@ -293,10 +300,6 @@ func (h *Handler) serverError(w http.ResponseWriter, errText string) {
 
 func (h *Handler) badRequestError(w http.ResponseWriter, errText string) {
 	http.Error(w, errText, http.StatusBadRequest)
-}
-
-func (h *Handler) unsupportedMediaTypeError(w http.ResponseWriter, errText string) {
-	http.Error(w, errText, http.StatusUnsupportedMediaType)
 }
 
 func (h *Handler) notFoundError(w http.ResponseWriter) {

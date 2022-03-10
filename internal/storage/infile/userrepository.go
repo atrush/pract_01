@@ -1,18 +1,19 @@
 package infile
 
 import (
+	"context"
 	"errors"
-	"sync"
 
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/atrush/pract_01.git/internal/storage/schema"
 	"github.com/google/uuid"
 )
 
 var _ storage.UserRepository = (*userRepository)(nil)
 
 type userRepository struct {
-	cache cache
-	sync.RWMutex
+	cache *cache
 }
 
 // Init new repository
@@ -22,24 +23,28 @@ func newUserRepository(c *cache) (*userRepository, error) {
 	}
 
 	return &userRepository{
-		cache: *c,
+		cache: c,
 	}, nil
 }
 
 // Check userID exist
 func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
-	r.RLock()
+	r.cache.RLock()
 	_, ok := r.cache.userCache[userID]
-	defer r.RUnlock()
+	defer r.cache.RUnlock()
 
 	return ok, nil
 }
 
 // Add User
-func (r *userRepository) AddUser(user *storage.User) error {
-	r.Lock()
-	r.cache.userCache[user.ID] = user.ID
-	defer r.Unlock()
+func (r *userRepository) AddUser(_ context.Context, user model.User) (model.User, error) {
+	dbObj, err := schema.NewUserFromCanonical(user)
+	if err != nil {
+		return model.User{}, err
+	}
+	r.cache.Lock()
+	r.cache.userCache[user.ID] = dbObj.ID
+	defer r.cache.Unlock()
 
-	return nil
+	return user, nil
 }

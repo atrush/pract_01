@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/atrush/pract_01.git/internal/storage"
+	"github.com/atrush/pract_01.git/internal/storage/schema"
 )
 
 type fileWriter struct {
@@ -30,7 +30,7 @@ func (f *fileWriter) Close() error {
 	return f.file.Close()
 }
 
-func (f *fileWriter) WriteURL(sht storage.ShortURL) error {
+func (f *fileWriter) WriteURL(sht schema.ShortURL) error {
 
 	jsURL, err := json.Marshal(sht)
 	if err != nil {

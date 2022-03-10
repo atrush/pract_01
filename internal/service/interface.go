@@ -1,24 +1,21 @@
 package service
 
 import (
-	st "github.com/atrush/pract_01.git/internal/storage"
+	"context"
+	"github.com/atrush/pract_01.git/internal/model"
 	"github.com/google/uuid"
 )
 
-type Servicer interface {
-	URL() URLShortener
-	User() UserManager
-	Ping() error
-}
-
 type URLShortener interface {
-	GetURL(shortID string) (string, error)
-	GetUserURLList(userID uuid.UUID) ([]st.ShortURL, error)
-	SaveURL(srcURL string, userID uuid.UUID) (string, error)
+	GetURL(ctx context.Context, shortID string) (model.ShortURL, error)
+	GetUserURLList(ctx context.Context, userID uuid.UUID) ([]model.ShortURL, error)
+	SaveURL(ctx context.Context, srcURL string, userID uuid.UUID) (string, error)
 	SaveURLList(srcArr map[string]string, userID uuid.UUID) error
+	DeleteURLList(userID uuid.UUID, shortIDList ...string) error
+	Ping(ctx context.Context) error
 }
 
 type UserManager interface {
-	AddUser() (*st.User, error)
-	Exist(id uuid.UUID) (bool, error)
+	AddUser(ctx context.Context) (model.User, error)
+	Exist(ctx context.Context, id uuid.UUID) (bool, error)
 }
