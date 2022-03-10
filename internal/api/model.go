@@ -1,10 +1,11 @@
 package api
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/atrush/pract_01.git/internal/model"
-	"github.com/go-playground/validator/v10"
 )
 
 type (
@@ -35,10 +36,8 @@ type (
 )
 
 func (s *ShortenRequest) Validate() error {
-	validate := validator.New()
-
-	if err := validate.Struct(s); err != nil {
-		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
+	if !IsNotEmpty3986URL(s.SrcURL) {
+		return errors.New(fmt.Sprintf("неверное значение URL: %v", s.SrcURL))
 	}
 
 	return nil
@@ -66,4 +65,19 @@ func NewShortenListResponseFromCanonical(objs []model.ShortURL, baseURL string) 
 		})
 	}
 	return responseArr
+}
+
+func IsNotEmpty3986URL(url string) bool {
+	ch := `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:/?#[]@!$&'()*+,;=-_.~%`
+
+	if url == "" || len(url) > 2048 {
+		return false
+	}
+
+	for _, c := range url {
+		if !strings.Contains(ch, string(c)) {
+			return false
+		}
+	}
+	return true
 }

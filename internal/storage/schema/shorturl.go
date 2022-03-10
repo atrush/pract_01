@@ -1,9 +1,10 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
 	"github.com/atrush/pract_01.git/internal/model"
@@ -68,11 +69,36 @@ func (o URLList) ToCanonical() ([]model.ShortURL, error) {
 
 // Validate validate db obj
 func (o ShortURL) Validate() error {
-	validate := validator.New()
+	if o.ID == uuid.Nil {
+		return errors.New("ID не может быть nil: %v")
+	}
 
-	if err := validate.Struct(o); err != nil {
-		return fmt.Errorf("error validation db ShortURL : %w", err)
+	if o.UserID == uuid.Nil {
+		return errors.New("UserID не может быть nil: %v")
+	}
+
+	if !IsNotEmpty3986URL(o.ShortID) {
+		return errors.New(fmt.Sprintf("неверное значение ShortID: %v", o.ShortID))
+	}
+
+	if !IsNotEmpty3986URL(o.URL) {
+		return errors.New(fmt.Sprintf("неверное значение URL: %v", o.URL))
 	}
 
 	return nil
+}
+
+func IsNotEmpty3986URL(url string) bool {
+	ch := `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:/?#[]@!$&'()*+,;=-_.~%`
+
+	if url == "" || len(url) > 2048 {
+		return false
+	}
+
+	for _, c := range url {
+		if !strings.Contains(ch, string(c)) {
+			return false
+		}
+	}
+	return true
 }

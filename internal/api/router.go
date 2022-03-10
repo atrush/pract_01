@@ -21,6 +21,8 @@ func NewRouter(handler *Handler) *chi.Mux {
 	r.Use(gzipReaderHandle)
 	r.Use(handler.auth.Middleware)
 
+	r.Mount("/debug", middleware.Profiler())
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AllowContentType("application/json"))
 		r.Post("/api/shorten/batch", handler.SaveBatch)

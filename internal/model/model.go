@@ -1,19 +1,22 @@
 package model
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
 type ShortURL struct {
 	ID        uuid.UUID `json:"id"`
-	ShortID   string    `json:"shortid" validate:"required"`
-	URL       string    `json:"url" validate:"required,url,max=2048"`
-	UserID    uuid.UUID `json:"userid" validate:"required"`
+	ShortID   string    `json:"shortid"`
+	URL       string    `json:"url"`
+	UserID    uuid.UUID `json:"userid"`
 	IsDeleted bool      `json:"isdeleted"`
 }
+
+type ShortURLValidator func(u ShortURL) error
 
 func NewShortURL(srcURL string, userID uuid.UUID) ShortURL {
 	return ShortURL{
@@ -22,6 +25,32 @@ func NewShortURL(srcURL string, userID uuid.UUID) ShortURL {
 		UserID:    userID,
 		IsDeleted: false,
 	}
+}
+
+func (u ShortURL) Validate(opts ...ShortURLValidator) error {
+
+	if u.ID == uuid.Nil {
+		return errors.New("ID не может быть nil: %v")
+	}
+
+	if u.UserID == uuid.Nil {
+		return errors.New("UserID не может быть nil: %v")
+	}
+
+	if !IsNotEmpty3986URL(u.ShortID) {
+		return errors.New(fmt.Sprintf("неверное значение ShortID: %v", u.ShortID))
+	}
+
+	if !IsNotEmpty3986URL(u.URL) {
+		return errors.New(fmt.Sprintf("неверное значение URL: %v", u.URL))
+	}
+
+	for _, opt := range opts {
+		if err := opt(u); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type User struct {
@@ -34,22 +63,24 @@ func NewUser() User {
 	}
 }
 
-func (s ShortURL) Validate() error {
-	validate := validator.New()
-
-	if err := validate.Struct(s); err != nil {
-		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
+func (u User) Validate() error {
+	if u.ID == uuid.Nil {
+		return errors.New("ID не может быть nil: %v")
 	}
-
 	return nil
 }
 
-func (u User) Validate() error {
-	validate := validator.New()
+func IsNotEmpty3986URL(url string) bool {
+	ch := `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:/?#[]@!$&'()*+,;=-_.~%`
 
-	if err := validate.Struct(u); err != nil {
-		return fmt.Errorf("ошибка проверки сокращаемой ссылки: %w", err)
+	if url == "" || len(url) > 2048 {
+		return false
 	}
 
-	return nil
+	for _, c := range url {
+		if !strings.Contains(ch, string(c)) {
+			return false
+		}
+	}
+	return true
 }
