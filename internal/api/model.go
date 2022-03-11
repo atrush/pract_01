@@ -45,14 +45,14 @@ func (s *ShortenRequest) Validate() error {
 
 // Make list of batch response from map[incomming-id]shotID
 func NewBatchListResponseFromMap(objs map[string]string, baseURL string) []BatchResponse {
-	var respArr []BatchResponse
+	responseArr := make([]BatchResponse, 0, len(objs))
 	for k, v := range objs {
-		respArr = append(respArr, BatchResponse{
+		responseArr = append(responseArr, BatchResponse{
 			ID:       k,
 			ShortURL: baseURL + "/" + v,
 		})
 	}
-	return respArr
+	return responseArr
 }
 
 // Make list of short response from arr of canonical URLs
