@@ -16,7 +16,7 @@ import (
 
 // Test save batch URL handler
 func BenchmarkBatchSaveURL(b *testing.B) {
-	r, w, cookie, err := initBenchHandler(b)
+	r, w, cookie, err := initTestHandler(b)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func BenchmarkBatchSaveURL(b *testing.B) {
 
 // Test save URL handler with JSON body
 func BenchmarkBJSONSaveURL(b *testing.B) {
-	r, w, cookie, err := initBenchHandler(b)
+	r, w, cookie, err := initTestHandler(b)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func BenchmarkBJSONSaveURL(b *testing.B) {
 
 // Test save URL handler with text body
 func BenchmarkTextSaveURL(b *testing.B) {
-	r, w, cookie, err := initBenchHandler(b)
+	r, w, cookie, err := initTestHandler(b)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func getAuthCookie(r *chi.Mux, w *httptest.ResponseRecorder) (*http.Cookie, erro
 }
 
 // init handler from db
-func initBenchHandler(b *testing.B) (*chi.Mux, *httptest.ResponseRecorder, *http.Cookie, error) {
+func initTestHandler(b *testing.B) (*chi.Mux, *httptest.ResponseRecorder, *http.Cookie, error) {
 	b.StopTimer() // останавливаем таймер
 
 	// init db
