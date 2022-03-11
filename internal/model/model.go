@@ -38,11 +38,11 @@ func (u ShortURL) Validate(opts ...ShortURLValidator) error {
 	}
 
 	if !IsNotEmpty3986URL(u.ShortID) {
-		return errors.New(fmt.Sprintf("неверное значение ShortID: %v", u.ShortID))
+		return fmt.Errorf("неверное значение ShortID: %v", u.ShortID)
 	}
 
 	if !IsNotEmpty3986URL(u.URL) {
-		return errors.New(fmt.Sprintf("неверное значение URL: %v", u.URL))
+		return fmt.Errorf("неверное значение URL: %v", u.URL)
 	}
 
 	for _, opt := range opts {

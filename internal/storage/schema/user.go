@@ -1,9 +1,9 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
 	"github.com/atrush/pract_01.git/internal/model"
@@ -41,10 +41,8 @@ func (u User) ToCanonical() (model.User, error) {
 
 // Validate validate db obj
 func (u User) Validate() error {
-	validate := validator.New()
-
-	if err := validate.Struct(u); err != nil {
-		return fmt.Errorf("error validation db User : %w", err)
+	if u.ID == uuid.Nil {
+		return errors.New("ID не может быть nil: %v")
 	}
 
 	return nil

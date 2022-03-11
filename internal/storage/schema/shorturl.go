@@ -78,11 +78,11 @@ func (o ShortURL) Validate() error {
 	}
 
 	if !IsNotEmpty3986URL(o.ShortID) {
-		return errors.New(fmt.Sprintf("неверное значение ShortID: %v", o.ShortID))
+		return fmt.Errorf("неверное значение ShortID: %v", o.ShortID)
 	}
 
 	if !IsNotEmpty3986URL(o.URL) {
-		return errors.New(fmt.Sprintf("неверное значение URL: %v", o.URL))
+		return fmt.Errorf("неверное значение URL: %v", o.URL)
 	}
 
 	return nil

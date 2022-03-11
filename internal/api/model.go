@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -37,7 +36,7 @@ type (
 
 func (s *ShortenRequest) Validate() error {
 	if !IsNotEmpty3986URL(s.SrcURL) {
-		return errors.New(fmt.Sprintf("неверное значение URL: %v", s.SrcURL))
+		return fmt.Errorf("неверное значение URL: %v", s.SrcURL)
 	}
 
 	return nil
