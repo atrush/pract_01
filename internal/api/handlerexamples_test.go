@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func ExampleHandlers_PingHandler() {
+func ExampleHandler_Ping() {
 	h, err := initExampleHandler()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -24,7 +24,7 @@ func ExampleHandlers_PingHandler() {
 	r.ServeHTTP(w, request)
 }
 
-func ExampleHandlers_SaveURLHandler() {
+func ExampleHandler_SaveURLHandler() {
 	h, err := initExampleHandler()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -38,7 +38,7 @@ func ExampleHandlers_SaveURLHandler() {
 	r.ServeHTTP(w, request)
 }
 
-func ExampleHandlers_SaveJSONURLHandler() {
+func ExampleHandler_SaveURLJSONHandler() {
 	h, err := initExampleHandler()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -52,7 +52,7 @@ func ExampleHandlers_SaveJSONURLHandler() {
 	r.ServeHTTP(w, request)
 }
 
-func ExampleHandlers_GetURLHandler() {
+func ExampleHandler_GetURLHandler() {
 	h, err := initExampleHandler()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -66,7 +66,7 @@ func ExampleHandlers_GetURLHandler() {
 	r.ServeHTTP(w, request)
 }
 
-func ExampleHandlers_GetUserUrls() {
+func ExampleHandler_GetUserUrls() {
 	h, err := initExampleHandler()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -97,7 +97,7 @@ func ExampleHandlers_GetUserUrls() {
 	r.ServeHTTP(w, request)
 }
 
-func ExampleHandlers_SaveBatch() {
+func ExampleHandler_SaveBatch() {
 	h, err := initExampleHandler()
 	if err != nil {
 		log.Fatal(err.Error())
