@@ -11,6 +11,7 @@ import (
 )
 
 type (
+	//  ShortURL storage url entity.
 	ShortURL struct {
 		ID        uuid.UUID
 		ShortID   string    `validate:"required"`
@@ -18,10 +19,11 @@ type (
 		UserID    uuid.UUID `validate:"required"`
 		IsDeleted bool
 	}
+	//  URLList list of storage url entityes.
 	URLList []ShortURL
 )
 
-// NewOrderFromCanonical creates a new ShortURL DB object from canonical model.
+//  NewURLFromCanonical creates a new ShortURL storage object from canonical model.
 func NewURLFromCanonical(obj model.ShortURL) (ShortURL, error) {
 	dbObj := ShortURL{
 		ID:        obj.ID,
@@ -36,7 +38,7 @@ func NewURLFromCanonical(obj model.ShortURL) (ShortURL, error) {
 	return dbObj, nil
 }
 
-// ToCanonical converts a DB object to canonical model.
+//  ToCanonical converts a storage url object to canonical model.
 func (o ShortURL) ToCanonical() (model.ShortURL, error) {
 	obj := model.ShortURL{
 		ID:        o.ID,
@@ -49,11 +51,10 @@ func (o ShortURL) ToCanonical() (model.ShortURL, error) {
 	if err := obj.Validate(); err != nil {
 		return model.ShortURL{}, fmt.Errorf("status: %w", err)
 	}
-
 	return obj, nil
 }
 
-// ToCanonical converts a DB object to canonical model.
+//  ToCanonical converts list of storage url object to canonical model.
 func (o URLList) ToCanonical() ([]model.ShortURL, error) {
 	objs := make([]model.ShortURL, 0, len(o))
 	for dbObjIdx, dbObj := range o {
@@ -67,7 +68,7 @@ func (o URLList) ToCanonical() ([]model.ShortURL, error) {
 	return objs, nil
 }
 
-// Validate validate db obj
+//  Validate validates storage url object.
 func (o ShortURL) Validate() error {
 	if o.ID == uuid.Nil {
 		return errors.New("ID не может быть nil: %v")
@@ -77,18 +78,19 @@ func (o ShortURL) Validate() error {
 		return errors.New("UserID не может быть nil: %v")
 	}
 
-	if !IsNotEmpty3986URL(o.ShortID) {
+	if !isNotEmpty3986URL(o.ShortID) {
 		return fmt.Errorf("неверное значение ShortID: %v", o.ShortID)
 	}
 
-	if !IsNotEmpty3986URL(o.URL) {
+	if !isNotEmpty3986URL(o.URL) {
 		return fmt.Errorf("неверное значение URL: %v", o.URL)
 	}
 
 	return nil
 }
 
-func IsNotEmpty3986URL(url string) bool {
+//  isNotEmpty3986URL checks that string not empty and contains only RFC3986 symbols.
+func isNotEmpty3986URL(url string) bool {
 	ch := `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:/?#[]@!$&'()*+,;=-_.~%`
 
 	if url == "" || len(url) > 2048 {

@@ -10,23 +10,25 @@ import (
 )
 
 type (
+	//  User storage user entity.
 	User struct {
 		ID uuid.UUID `validate:"required"`
 	}
 )
 
-// NewOrderFromCanonical creates a new ShortURL DB object from canonical model.
+// NewUserFromCanonical creates a new user storage object from canonical model.
 func NewUserFromCanonical(obj model.User) (User, error) {
 	dbObj := User{
 		ID: obj.ID,
 	}
+
 	if err := dbObj.Validate(); err != nil {
 		return User{}, err
 	}
 	return dbObj, nil
 }
 
-// ToCanonical converts a DB object to canonical model.
+// ToCanonical converts a storage user object to canonical model.
 func (u User) ToCanonical() (model.User, error) {
 	obj := model.User{
 		ID: u.ID,
@@ -35,15 +37,13 @@ func (u User) ToCanonical() (model.User, error) {
 	if err := obj.Validate(); err != nil {
 		return model.User{}, fmt.Errorf("status: %w", err)
 	}
-
 	return obj, nil
 }
 
-// Validate validate db obj
+// Validate validates storage user object.
 func (u User) Validate() error {
 	if u.ID == uuid.Nil {
 		return errors.New("ID не может быть nil: %v")
 	}
-
 	return nil
 }

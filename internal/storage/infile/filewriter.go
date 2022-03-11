@@ -9,11 +9,13 @@ import (
 	"github.com/atrush/pract_01.git/internal/storage/schema"
 )
 
+//  fileWriter provides data writing to file.
 type fileWriter struct {
 	file   *os.File
 	writer *bufio.Writer
 }
 
+//  newFileWriter inits new file writer.
 func newFileWriter(filename string) (*fileWriter, error) {
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
@@ -26,10 +28,12 @@ func newFileWriter(filename string) (*fileWriter, error) {
 	}, nil
 }
 
+//  Close closes file.
 func (f *fileWriter) Close() error {
 	return f.file.Close()
 }
 
+//  WriteURL writes url item to file.
 func (f *fileWriter) WriteURL(sht schema.ShortURL) error {
 
 	jsURL, err := json.Marshal(sht)

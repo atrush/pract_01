@@ -11,6 +11,7 @@ import (
 )
 
 type (
+	//  Auth implements user authorisation
 	Auth struct {
 		crypt AuthCrypt
 		svc   service.UserManager
@@ -22,6 +23,7 @@ var (
 	ContextKeyUserID = contextKey("user-id")
 )
 
+// NewAuth activates new Auth
 func NewAuth(svc service.UserManager) Auth {
 	return Auth{
 		crypt: *NewAuthCrypt(),
@@ -29,7 +31,7 @@ func NewAuth(svc service.UserManager) Auth {
 	}
 }
 
-// Return auth middleware
+// Middleware sets token for user
 func (a *Auth) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -46,7 +48,7 @@ func (a *Auth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// Read uuid from cookie token. If ok and user exist set ctx, else generate new user and set cookie
+//  authUser reads uuid from cookie token. If ok and user exist set ctx, else generate new user and set cookie
 func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	if cookie, errCookie := r.Cookie("token"); errCookie == nil {
 		//decode token
@@ -83,7 +85,7 @@ func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, erro
 	return newUserUUID, nil
 }
 
-// Add new user to storage, return UUID and token
+// newUser adds new user, return UUID and token
 func (a *Auth) newUser(ctx context.Context) (uuid.UUID, string, error) {
 	newUser, err := a.svc.AddUser(ctx)
 	if err == nil {

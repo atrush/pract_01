@@ -10,18 +10,19 @@ import (
 
 var _ storage.UserRepository = (*userRepository)(nil)
 
+//  userRepository implements UserRepository interface, provides actions with user records in psql storage.
 type userRepository struct {
 	db *sql.DB
 }
 
-// New postgress user repository
+//  newUserRepository inits new user repository.
 func newUserRepository(db *sql.DB) *userRepository {
 	return &userRepository{
 		db: db,
 	}
 }
 
-// Add user to db
+//  AddUser saves user to database.
 func (r *userRepository) AddUser(ctx context.Context, user model.User) (model.User, error) {
 	err := r.db.QueryRowContext(
 		ctx,
@@ -36,7 +37,7 @@ func (r *userRepository) AddUser(ctx context.Context, user model.User) (model.Us
 	return user, nil
 }
 
-// Check userID exist
+//  Exist checks that user is exist in database.
 func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 	count := 0
 	err := r.db.QueryRow(
