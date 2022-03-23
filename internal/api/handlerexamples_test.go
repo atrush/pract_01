@@ -19,7 +19,7 @@ func ExampleHandler_Ping() {
 
 	request := httptest.NewRequest(http.MethodGet, "/ping", nil)
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 }
@@ -33,7 +33,7 @@ func ExampleHandler_SaveURLHandler() {
 	request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://practicum.yandex.ru/"))
 	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 }
@@ -47,7 +47,7 @@ func ExampleHandler_SaveURLJSONHandler() {
 	request := httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader("{\"url\": \"https://www.google.com/\"}"))
 	request.Header.Set("Content-Type", "application/json")
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 }
@@ -61,7 +61,7 @@ func ExampleHandler_GetURLHandler() {
 	request := httptest.NewRequest(http.MethodGet, "/mEoMYa+7", nil)
 	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, request)
 }
@@ -72,7 +72,7 @@ func ExampleHandler_GetUserUrls() {
 		log.Fatal(err.Error())
 	}
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 
 	cookie, err := getAuthCookie(r, w)
@@ -103,7 +103,7 @@ func ExampleHandler_SaveBatch() {
 		log.Fatal(err.Error())
 	}
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 
 	jsBatch := "[{\"correlation_id\":\"1b8c89ab-608f-4f41-a0fe-e30567e9040a\",\"original_url\":\"http://uw5y0ltlx.ru\"},{\"correlation_id\":\"b3419e03-6055-4055-8ac6-5027b83bb809\",\"original_url\":\"http://vjfl1qozfyl.biz/mfnao4blefvn/ypfsjjlgmu3\"}]"

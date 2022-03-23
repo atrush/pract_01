@@ -244,7 +244,7 @@ func TestHandler_BatchDelete(t *testing.T) {
 
 	for j := 0; j < workersCount; j++ {
 		g.Go(func() error {
-			saveBatchItem := GoSaveBatch{r: NewRouter(h), count: 11}
+			saveBatchItem := GoSaveBatch{r: NewRouter(h, false), count: 11}
 			if err := saveBatchItem.SaveBatch(); err != nil {
 				return err
 			}
@@ -287,7 +287,7 @@ func TestHandler_ShortenBatch(t *testing.T) {
 
 	for j := 0; j < workersCount; j++ {
 		g.Go(func() error {
-			saveBatchItem := GoSaveBatch{r: NewRouter(h), count: 500}
+			saveBatchItem := GoSaveBatch{r: NewRouter(h, false), count: 500}
 			if err := saveBatchItem.SaveBatch(); err != nil {
 				return err
 			}
@@ -471,7 +471,7 @@ func TestHandler_SaveURLHandler(t *testing.T) {
 func (tt *HandlerTest) CheckTest(db st.Storage, t *testing.T) {
 	h := initHandler(t, db)
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	request := httptest.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte(tt.body)))
 
 	if tt.contentType != "" {

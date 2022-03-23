@@ -132,7 +132,7 @@ func initTestHandler(b *testing.B) (*chi.Mux, *httptest.ResponseRecorder, *http.
 		return nil, nil, nil, err
 	}
 
-	r := NewRouter(h)
+	r := NewRouter(h, false)
 	w := httptest.NewRecorder()
 
 	cookie, err := getAuthCookie(r, w)

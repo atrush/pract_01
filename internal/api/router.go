@@ -6,7 +6,7 @@ import (
 )
 
 //  NewRouter init server routes.
-func NewRouter(handler *Handler) *chi.Mux {
+func NewRouter(handler *Handler, debug bool) *chi.Mux {
 	r := chi.NewRouter()
 
 	//  compress middlewares
@@ -26,7 +26,9 @@ func NewRouter(handler *Handler) *chi.Mux {
 	r.Use(handler.auth.Middleware)
 
 	//  pprof routes
-	r.Mount("/debug", middleware.Profiler())
+	if debug {
+		r.Mount("/debug", middleware.Profiler())
+	}
 
 	//  json routes
 	r.Group(func(r chi.Router) {

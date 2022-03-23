@@ -35,7 +35,7 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 	return &Server{
 		httpServer: http.Server{
 			Addr:    cfg.ServerPort,
-			Handler: NewRouter(handler),
+			Handler: NewRouter(handler, cfg.Debug),
 		},
 	}, nil
 }
