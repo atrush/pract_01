@@ -23,7 +23,9 @@ var (
 	ContextKeyUserID = contextKey("user-id")
 )
 
-// NewAuth activates new Auth
+// NewAuth activates new Auth.
+// Using UserManager service for accessing to storage.
+// And crypto tool s from AuthCrypt
 func NewAuth(svc service.UserManager) Auth {
 	return Auth{
 		crypt: *NewAuthCrypt(),
