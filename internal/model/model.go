@@ -35,7 +35,7 @@ func NewShortURL(srcURL string, userID uuid.UUID) ShortURL {
 func (u ShortURL) Validate(opts ...ShortURLValidator) error {
 
 	if u.ID == uuid.Nil {
-		return errors.New("ID не может быть nil: %v")
+		return errors.New("ID не может быть nil")
 	}
 
 	if u.UserID == uuid.Nil {
