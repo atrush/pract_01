@@ -12,11 +12,12 @@ import (
 
 var _ URLShortener = (*ShortURLService)(nil)
 
+//  ShortURLService implements URLShortener interface, provides operations with urls.
 type ShortURLService struct {
 	db storage.Storage
 }
 
-// Return new URL service
+//  NewShortURLService inits and returns new URL service.
 func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
@@ -27,11 +28,12 @@ func NewShortURLService(db storage.Storage) (*ShortURLService, error) {
 	}, nil
 }
 
+//  DeleteURLList marks list of short urls as deleted.
 func (sh *ShortURLService) DeleteURLList(userID uuid.UUID, shotIDList ...string) error {
 	return sh.db.URL().DeleteURLBatch(userID, shotIDList...)
 }
 
-// Save map[id]URL to db, updates URL to ShortID in map
+//  SaveURLList saves map[external_id]URL to storage, updates URL to ShortID in map.
 func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) error {
 
 	//map of new shortURL with incoming IDs
@@ -70,7 +72,7 @@ func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) 
 	return nil
 }
 
-// Return array stored URLs by user UUID
+//  GetUserURLList returns array of stored urlss by user id.
 func (sh *ShortURLService) GetUserURLList(ctx context.Context, userID uuid.UUID) ([]model.ShortURL, error) {
 	list, err := sh.db.URL().GetUserURLList(ctx, userID, 100)
 	if err != nil {
@@ -80,7 +82,7 @@ func (sh *ShortURLService) GetUserURLList(ctx context.Context, userID uuid.UUID)
 	return list, nil
 }
 
-// Return stored URL by shortID
+//  GetURL returns stored url by shortID.
 func (sh *ShortURLService) GetURL(ctx context.Context, shortID string) (model.ShortURL, error) {
 	longURL, err := sh.db.URL().GetURL(ctx, shortID)
 	if err != nil {
@@ -90,7 +92,7 @@ func (sh *ShortURLService) GetURL(ctx context.Context, shortID string) (model.Sh
 	return longURL, nil
 }
 
-// Save URL for user, return shortID
+//  SaveURL saves url for user, return shortID.
 func (sh *ShortURLService) SaveURL(ctx context.Context, srcURL string, userID uuid.UUID) (string, error) {
 
 	sht := model.NewShortURL(srcURL, userID)
@@ -108,12 +110,12 @@ func (sh *ShortURLService) SaveURL(ctx context.Context, srcURL string, userID uu
 	return sht.ShortID, nil
 }
 
-// Check db connection
+//  Ping checks storage connection.
 func (sh *ShortURLService) Ping(ctx context.Context) error {
 	return sh.db.Ping()
 }
 
-// Generate unique ShortID, for generating multiple shortIDs use generatedCheck
+//  genShortURL generate unique ShortID, for generating multiple shortIDs use generatedCheck.
 func (sh *ShortURLService) genShortURL(srcURL string, id uuid.UUID, generatedCheck map[string]string) (string, error) {
 	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, id.String(), generatedCheck)
 	if err != nil {
@@ -123,7 +125,8 @@ func (sh *ShortURLService) genShortURL(srcURL string, id uuid.UUID, generatedChe
 	return shortID, nil
 }
 
-// Iter gen shortID, if exist try one more time, if maxIterate times throw error
+//  iterShortURLGenerator iter generates shortID.
+//  If generated short id is exist, tryes one more time, if maxIterate times throws error.
 func (sh *ShortURLService) iterShortURLGenerator(srcURL string, iterationCount int, salt string, generatedCheck map[string]string) (string, error) {
 	maxIterate := 10
 	shortID := GenerateShortLink(srcURL, salt)

@@ -11,11 +11,12 @@ import (
 
 var _ UserManager = (*UserService)(nil)
 
+//  UserService implements UserManager interface, provides operations with users.
 type UserService struct {
 	db storage.Storage
 }
 
-// New user service
+//  NewUserService inits and returns new user service.
 func NewUserService(db storage.Storage) (*UserService, error) {
 	if db == nil {
 		return nil, errors.New("ошибка инициализации хранилища")
@@ -26,7 +27,7 @@ func NewUserService(db storage.Storage) (*UserService, error) {
 	}, nil
 }
 
-// Check user is exist
+//  Exist checks user is exist, by user id.
 func (u *UserService) Exist(ctx context.Context, id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, errors.New("ошибка проверки существования user: uuid nil")
@@ -35,7 +36,7 @@ func (u *UserService) Exist(ctx context.Context, id uuid.UUID) (bool, error) {
 	return u.db.User().Exist(id)
 }
 
-// Add new user
+//  AddUser creates new user, save to storage and return instance.
 func (u *UserService) AddUser(ctx context.Context) (model.User, error) {
 	newUser := model.NewUser()
 

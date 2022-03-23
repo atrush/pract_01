@@ -8,20 +8,26 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+//  Config stores server config params.
 type Config struct {
 	ServerPort      string `env:"SERVER_ADDRESS" validate:"required,hostname_port"`
 	BaseURL         string `env:"BASE_URL" validate:"required,url"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" validate:"-"`
 	DatabaseDSN     string `env:"DATABASE_DSN" validate:"-"`
+	Debug           bool   `env:"SHORTENER_DEBUG" envDefault:"false" validate:"-"`
 }
 
+//  Default config params.
 const (
 	defServerPort  = ":8080"
 	defBaseURL     = "http://localhost:8080"
 	defFileStorage = ""
 	defDatabaseDSN = ""
+	defDebug       = false
 )
 
+//  NewConfig inits new config.
+//  Reads flag params over default params, then redefines  with environment params.
 func NewConfig() (*Config, error) {
 	cfg := Config{}
 	cfg.readFlagConfig()
@@ -33,14 +39,28 @@ func NewConfig() (*Config, error) {
 	return &cfg, nil
 }
 
+//  Validate validates config params.
+func (c *Config) Validate() error {
+	validate := validator.New()
+
+	if err := validate.Struct(c); err != nil {
+		return fmt.Errorf("ошибка валидации конфига: %w", err)
+	}
+	return nil
+}
+
+//  readFlagConfig reads flag params over default params.
 func (c *Config) readFlagConfig() {
 	flag.StringVar(&c.ServerPort, "a", defServerPort, "порт HTTP-сервера <:port>")
 	flag.StringVar(&c.BaseURL, "b", defBaseURL, "базовый URL для сокращенных ссылок <http://localhost:port>")
 	flag.StringVar(&c.FileStoragePath, "f", defFileStorage, "путь до файла с сокращёнными URL")
 	flag.StringVar(&c.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
+	flag.BoolVar(&c.Debug, "debug", defDebug, "режим отладки")
+
 	flag.Parse()
 }
 
+//  readEnvConfig redefines config params with environment params.
 func (c *Config) readEnvConfig() error {
 	envConfig := &Config{}
 
@@ -60,16 +80,8 @@ func (c *Config) readEnvConfig() error {
 	if envConfig.DatabaseDSN != "" {
 		c.DatabaseDSN = envConfig.DatabaseDSN
 	}
-
-	return nil
-}
-
-func (c *Config) Validate() error {
-	validate := validator.New()
-
-	if err := validate.Struct(c); err != nil {
-		return fmt.Errorf("ошибка валидации конфига: %w", err)
+	if envConfig.Debug {
+		c.Debug = envConfig.Debug
 	}
-
 	return nil
 }

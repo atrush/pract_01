@@ -5,9 +5,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(handler *Handler) *chi.Mux {
+//  NewRouter init server routes.
+func NewRouter(handler *Handler, debug bool) *chi.Mux {
 	r := chi.NewRouter()
 
+	//  compress middlewares
 	r.Use(middleware.Compress(5, "text/html",
 		"text/css",
 		"text/plain",
@@ -19,8 +21,16 @@ func NewRouter(handler *Handler) *chi.Mux {
 		"application/rss+xml",
 		"image/svg+xml"))
 	r.Use(gzipReaderHandle)
+
+	//  auth middleware
 	r.Use(handler.auth.Middleware)
 
+	//  pprof routes
+	if debug {
+		r.Mount("/debug", middleware.Profiler())
+	}
+
+	//  json routes
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AllowContentType("application/json"))
 		r.Post("/api/shorten/batch", handler.SaveBatch)

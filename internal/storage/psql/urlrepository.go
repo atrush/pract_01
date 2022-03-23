@@ -21,11 +21,7 @@ import (
 
 var _ st.URLRepository = (*shortURLRepository)(nil)
 
-type URLBuffer struct {
-	buf []model.ShortURL
-	sync.Mutex
-}
-
+//  shortURLRepository implements URLRepository interface, provides actions with url records in psql storage.
 type shortURLRepository struct {
 	db              *sql.DB
 	insertBuffer    URLBuffer
@@ -33,11 +29,17 @@ type shortURLRepository struct {
 	flushDeleteChan chan struct{}
 }
 
+//  URLBuffer is buffeer for batch inserting.
+type URLBuffer struct {
+	buf []model.ShortURL
+	sync.Mutex
+}
+
 const (
-	delBuffBatch = 10
+	delBuffBatch = 10 //  size of buffer for batch delete.
 )
 
-// New postgress URL repository
+//  newShortURLRepository inits new url repository.
 func newShortURLRepository(db *sql.DB) *shortURLRepository {
 	repo := shortURLRepository{
 		db: db,
@@ -52,7 +54,8 @@ func newShortURLRepository(db *sql.DB) *shortURLRepository {
 	return &repo
 }
 
-// Async mark as deleted list of shortIDs
+//  DeleteURLBatch runs goroutine that adds list of urls to delete buffer.
+//  Flushes delete buffer after adding urls.
 func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error {
 	if len(shortIDList) == 0 {
 		return nil
@@ -70,8 +73,8 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 	return nil
 }
 
-// Init single delete worker, that takes URLs from deleteChan and delete when filling the cache,
-// or when take signal from flushDeleteChan
+//  initDeleteBatchWorker runs single delete worker, that takes URLs from deleteChan
+//  and delete when filling the cache, or when take signal from flushDeleteChan.
 func (r *shortURLRepository) initDeleteBatchWorker() {
 	go func() {
 		cache := make([]schema.ShortURL, 0, delBuffBatch)
@@ -98,7 +101,7 @@ func (r *shortURLRepository) initDeleteBatchWorker() {
 	}()
 }
 
-// Delete array of URLs with transaction
+//  deleteTxURLBatch marks array of urls as deleted with transaction.
 func (r *shortURLRepository) deleteTxURLBatch(urls []schema.ShortURL) (err error) {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -133,7 +136,7 @@ func (r *shortURLRepository) deleteTxURLBatch(urls []schema.ShortURL) (err error
 	return nil
 }
 
-// Save ShortURL using buffer
+//  SaveURLBuff saves array of urls using buffer.
 func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	if sht == nil {
 		return errors.New("URL is nil")
@@ -153,6 +156,7 @@ func (r *shortURLRepository) SaveURLBuff(sht *model.ShortURL) error {
 	return nil
 }
 
+//  SaveURLBuffFlush locks mutex and runs save buffer flush.
 func (r *shortURLRepository) SaveURLBuffFlush() error {
 	r.insertBuffer.Lock()
 	defer r.insertBuffer.Unlock()
@@ -160,7 +164,118 @@ func (r *shortURLRepository) SaveURLBuffFlush() error {
 	return r.saveURLBuffFlushNoLock()
 }
 
-// Save ShorURLs stored in bufferr to db
+//  SaveURL saves url to database.
+func (r *shortURLRepository) SaveURL(ctx context.Context, sht model.ShortURL) (model.ShortURL, error) {
+	dbObj, err := schema.NewURLFromCanonical(sht)
+	if err != nil {
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
+	}
+
+	row := r.db.QueryRowContext(
+		ctx,
+		"INSERT INTO urls (id, user_id, srcurl, shorturl, isdeleted) VALUES ($1, $2, $3, $4, $5) RETURNING id ",
+		dbObj.ID,
+		dbObj.UserID,
+		dbObj.URL,
+		dbObj.ShortID,
+		dbObj.IsDeleted,
+	)
+
+	if row.Err() != nil {
+		// check duplicate srcurl
+		pqErr, ok := row.Err().(*pq.Error)
+		if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "urls_srcurl_key" {
+			existURL, err := r.GetShortURLBySrcURL(ctx, sht.URL)
+			if err != nil {
+				return model.ShortURL{}, fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
+					sht.URL, err)
+			}
+			return model.ShortURL{}, &shterrors.ErrorConflictSaveURL{
+				Err:           row.Err(),
+				ExistShortURL: existURL.ShortID,
+			}
+		}
+	}
+
+	if err := row.Scan(&dbObj.ID); err != nil {
+		return model.ShortURL{}, err
+	}
+
+	sht.ID = dbObj.ID
+	return sht, nil
+}
+
+//  GetURL selects url from database by shortID, returns as canonical ShortURL.
+func (r *shortURLRepository) GetURL(ctx context.Context, shortID string) (model.ShortURL, error) {
+	dbObj := schema.ShortURL{}
+	err := r.db.QueryRow(
+		"select id, user_id, srcurl, shorturl, isdeleted from urls where shorturl = $1", shortID,
+	).Scan(&dbObj.ID, &dbObj.UserID, &dbObj.URL, &dbObj.ShortID, &dbObj.IsDeleted)
+
+	if err != nil {
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
+	}
+
+	return dbObj.ToCanonical()
+}
+
+//  GetShortURLBySrcURL selects url from database by url, returns as canonical ShortURL.
+func (r *shortURLRepository) GetShortURLBySrcURL(ctx context.Context, url string) (model.ShortURL, error) {
+	dbObj := schema.ShortURL{}
+	err := r.db.QueryRow(
+		"select id, user_id, srcurl, shorturl, isdeleted from urls where srcurl = $1", url,
+	).Scan(&dbObj.ID, &dbObj.UserID, &dbObj.URL, &dbObj.ShortID, &dbObj.IsDeleted)
+
+	if err != nil {
+		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
+	}
+
+	return dbObj.ToCanonical()
+}
+
+//  GetUserURLList selects list of url from database by userID, returns as list of canonical ShortURL.
+func (r *shortURLRepository) GetUserURLList(ctx context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error) {
+	var userURLs schema.URLList
+	userURLs = make([]schema.ShortURL, 0, limit)
+
+	rows, err := r.db.QueryContext(
+		ctx,
+		"SELECT id, user_id, srcurl, shorturl, isdeleted from urls WHERE user_id = $1 LIMIT $2", userID, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var s schema.ShortURL
+		err = rows.Scan(&s.ID, &s.UserID, &s.URL, &s.ShortID, &s.IsDeleted)
+		if err != nil {
+			return nil, err
+		}
+
+		userURLs = append(userURLs, s)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return userURLs.ToCanonical()
+}
+
+//  Exist checks that shortID exist in database.
+func (r *shortURLRepository) Exist(shortID string) (bool, error) {
+	count := 0
+	err := r.db.QueryRow(
+		"SELECT  COUNT(*) as count FROM urls WHERE shorturl = $1", shortID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// saveURLBuffFlushNoLock saves array of urls to database, using transaction.
 func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -207,115 +322,4 @@ func (r *shortURLRepository) saveURLBuffFlushNoLock() (err error) {
 	}
 
 	return nil
-}
-
-// Save URL to db
-func (r *shortURLRepository) SaveURL(ctx context.Context, sht model.ShortURL) (model.ShortURL, error) {
-	dbObj, err := schema.NewURLFromCanonical(sht)
-	if err != nil {
-		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
-	}
-
-	row := r.db.QueryRowContext(
-		ctx,
-		"INSERT INTO urls (id, user_id, srcurl, shorturl, isdeleted) VALUES ($1, $2, $3, $4, $5) RETURNING id ",
-		dbObj.ID,
-		dbObj.UserID,
-		dbObj.URL,
-		dbObj.ShortID,
-		dbObj.IsDeleted,
-	)
-
-	if row.Err() != nil {
-		// check duplicate srcurl
-		pqErr, ok := row.Err().(*pq.Error)
-		if ok && pqErr.Code == pgerrcode.UniqueViolation && pqErr.Constraint == "urls_srcurl_key" {
-			existURL, err := r.GetShortURLBySrcURL(ctx, sht.URL)
-			if err != nil {
-				return model.ShortURL{}, fmt.Errorf("ошибка добавления записи в БД, ссылка %v уже существует: ошибка получения существующей короткой ссыки: %w",
-					sht.URL, err)
-			}
-			return model.ShortURL{}, &shterrors.ErrorConflictSaveURL{
-				Err:           row.Err(),
-				ExistShortURL: existURL.ShortID,
-			}
-		}
-	}
-
-	if err := row.Scan(&dbObj.ID); err != nil {
-		return model.ShortURL{}, err
-	}
-
-	sht.ID = dbObj.ID
-	return sht, nil
-}
-
-// Get source URL by shortID from db
-func (r *shortURLRepository) GetURL(ctx context.Context, shortID string) (model.ShortURL, error) {
-	dbObj := schema.ShortURL{}
-	err := r.db.QueryRow(
-		"select id, user_id, srcurl, shorturl, isdeleted from urls where shorturl = $1", shortID,
-	).Scan(&dbObj.ID, &dbObj.UserID, &dbObj.URL, &dbObj.ShortID, &dbObj.IsDeleted)
-
-	if err != nil {
-		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
-	}
-
-	return dbObj.ToCanonical()
-}
-
-// Get source URL by shortID from db
-func (r *shortURLRepository) GetShortURLBySrcURL(ctx context.Context, url string) (model.ShortURL, error) {
-	dbObj := schema.ShortURL{}
-	err := r.db.QueryRow(
-		"select id, user_id, srcurl, shorturl, isdeleted from urls where srcurl = $1", url,
-	).Scan(&dbObj.ID, &dbObj.UserID, &dbObj.URL, &dbObj.ShortID, &dbObj.IsDeleted)
-
-	if err != nil {
-		return model.ShortURL{}, fmt.Errorf("ошибка хранилица:%w", err)
-	}
-
-	return dbObj.ToCanonical()
-}
-
-// Get users urls by user id
-func (r *shortURLRepository) GetUserURLList(ctx context.Context, userID uuid.UUID, limit int) ([]model.ShortURL, error) {
-	var userURLs schema.URLList
-	userURLs = make([]schema.ShortURL, 0, limit)
-
-	rows, err := r.db.QueryContext(
-		ctx,
-		"SELECT id, user_id, srcurl, shorturl, isdeleted from urls WHERE user_id = $1 LIMIT $2", userID, limit)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var s schema.ShortURL
-		err = rows.Scan(&s.ID, &s.UserID, &s.URL, &s.ShortID, &s.IsDeleted)
-		if err != nil {
-			return nil, err
-		}
-
-		userURLs = append(userURLs, s)
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-	return userURLs.ToCanonical()
-}
-
-// check shortID exist in db
-func (r *shortURLRepository) Exist(shortID string) (bool, error) {
-	count := 0
-	err := r.db.QueryRow(
-		"SELECT  COUNT(*) as count FROM urls WHERE shorturl = $1", shortID).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
 }

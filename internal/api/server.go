@@ -11,11 +11,12 @@ import (
 	"github.com/atrush/pract_01.git/pkg"
 )
 
+//  Server implements http server
 type Server struct {
 	httpServer http.Server
 }
 
-// Return new server
+//  NewServer return new server
 func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 	svcSht, err := service.NewShortURLService(db)
 	if err != nil {
@@ -34,18 +35,19 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 	return &Server{
 		httpServer: http.Server{
 			Addr:    cfg.ServerPort,
-			Handler: NewRouter(handler),
+			Handler: NewRouter(handler, cfg.Debug),
 		},
 	}, nil
 }
 
-// Start server
+//  Run starts http server
 func (s *Server) Run() error {
 	return s.httpServer.ListenAndServe()
 }
 
-// Shutdown server
+//  Shutdown sutdown http server
 func (s *Server) Shutdown(ctx context.Context) error {
+	//  check server not off
 	if err := s.httpServer.ListenAndServe(); err == http.ErrServerClosed {
 		return errors.New("http server not runned")
 	}

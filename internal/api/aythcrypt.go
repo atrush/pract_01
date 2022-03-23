@@ -14,15 +14,16 @@ const (
 	uuidBlockSize = 16
 )
 
+// AuthCrypt provides crypto tools for auth tokens.
 type AuthCrypt struct {
 }
 
-// New token crypto
+// NewAuthCrypt activates new AuthCrypt.
 func NewAuthCrypt() *AuthCrypt {
 	return &AuthCrypt{}
 }
 
-// Encode uuid to token
+// EncodeUUID encodes uuid to token.
 func (c *AuthCrypt) EncodeUUID(id uuid.UUID) (string, error) {
 	if id == uuid.Nil {
 		return "", errors.New("ошибка шифрации: входной UUID nil")
@@ -42,7 +43,7 @@ func (c *AuthCrypt) EncodeUUID(id uuid.UUID) (string, error) {
 	return string(dstHEX), nil
 }
 
-// Decode uuid to token
+// DecodeToken decodes token to uuid.
 func (c *AuthCrypt) DecodeToken(token string) (uuid.UUID, error) {
 	byteToken, err := hex.DecodeString(token)
 	if err != nil {

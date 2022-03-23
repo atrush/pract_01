@@ -10,11 +10,13 @@ import (
 	"github.com/google/uuid"
 )
 
+//  fileReader provides data reading from file.
 type fileReader struct {
 	file    *os.File
 	scanner *bufio.Scanner
 }
 
+//  newFileReader inits new file reader.
 func newFileReader(fileName string) (*fileReader, error) {
 	file, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -27,10 +29,12 @@ func newFileReader(fileName string) (*fileReader, error) {
 	}, nil
 }
 
+//  Close closes file.
 func (f *fileReader) Close() error {
 	return f.file.Close()
 }
 
+//  ReadAll reads all items from file.
 func (f *fileReader) ReadAll() (map[uuid.UUID]schema.ShortURL, error) {
 	data := make(map[uuid.UUID]schema.ShortURL)
 	for f.scanner.Scan() {

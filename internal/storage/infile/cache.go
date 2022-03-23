@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//  cache stores records and indexes in memory.
 type cache struct {
 	sync.RWMutex
 	urlCache    map[uuid.UUID]schema.ShortURL
@@ -15,7 +16,7 @@ type cache struct {
 	userCache   map[uuid.UUID]uuid.UUID
 }
 
-// Init new cahe
+//  newCache inits new cache.
 func newCache() *cache {
 	return &cache{
 		urlCache:    make(map[uuid.UUID]schema.ShortURL),
