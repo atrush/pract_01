@@ -53,6 +53,7 @@ func BenchmarkBatchSaveURL(b *testing.B) {
 func BenchmarkBJSONSaveURL(b *testing.B) {
 	r, w, cookie, err := initTestHandler(b)
 	if err != nil {
+		b.ResetTimer()
 		b.Fatal(err)
 	}
 
@@ -62,7 +63,6 @@ func BenchmarkBJSONSaveURL(b *testing.B) {
 		request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer([]byte(url)))
 		request.AddCookie(cookie)
 		request.Header.Set("Content-Type", "application/json")
-
 		r.ServeHTTP(w, request)
 	}
 }
@@ -71,6 +71,7 @@ func BenchmarkBJSONSaveURL(b *testing.B) {
 func BenchmarkTextSaveURL(b *testing.B) {
 	r, w, cookie, err := initTestHandler(b)
 	if err != nil {
+		b.ResetTimer()
 		b.Fatal(err)
 	}
 
