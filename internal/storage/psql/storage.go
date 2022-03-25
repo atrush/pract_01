@@ -38,7 +38,6 @@ func NewStorage(conStringDSN string) (*Storage, error) {
 	if err := initBase(db); err != nil {
 		return nil, err
 	}
-	//initMigrations(db, migrationsPath)
 
 	st := &Storage{
 		db:           db,

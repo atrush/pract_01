@@ -87,8 +87,6 @@ func TestHandler_SaveConflict(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@localhost:5432/tst_00?sslmode=disable")
-			//require.NoError(t, err)
 
 			tstSt, err := infile.NewFileStorage("")
 			require.NoError(t, err)
@@ -97,8 +95,6 @@ func TestHandler_SaveConflict(t *testing.T) {
 				tt.initFixtures(tstSt)
 			}
 			tt.CheckTest(tstSt, t)
-			// tstSt.DropAll()
-			// tstSt.Close()
 		})
 	}
 }
@@ -139,7 +135,7 @@ func (g *GoSaveBatch) SaveBatch() error {
 
 	cookies := res.Cookies()
 
-	//save cookie
+	//  save cookie
 	g.cookie = cookies[0]
 
 	resBody, err := io.ReadAll(res.Body)
@@ -222,18 +218,6 @@ func (g *GoSaveBatch) CheckDeleted() error {
 }
 
 func TestHandler_BatchDelete(t *testing.T) {
-
-	//tstSt, err := psql.NewTestStorage("postgres://postgres:hjvfirb@192.168.1.15:5432/tst_00?sslmode=disable")
-	//require.NoError(t, err)
-	//time.Sleep(5 * time.Second)
-	//
-	//defer func() {
-	//	fmt.Printf("deffer run %v\n", 4)
-	//
-	//	tstSt.DropAll()
-	//	tstSt.Close()
-	//}()
-
 	tstSt, err := infile.NewFileStorage("")
 	require.NoError(t, err)
 

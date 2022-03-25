@@ -45,7 +45,7 @@ func main() {
 //  getDB returns initialized storage
 //  psql storage if dsn not empty, else memory storage
 func getDB(cfg pkg.Config) (storage.Storage, error) {
-	//postgress storage
+	//  postgress storage
 	if cfg.DatabaseDSN != "" {
 		db, err := psql.NewStorage(cfg.DatabaseDSN)
 		if err != nil {
@@ -55,7 +55,7 @@ func getDB(cfg pkg.Config) (storage.Storage, error) {
 		return db, nil
 	}
 
-	//memory with file storage
+	//  memory with file storage
 	db, err := infile.NewFileStorage(cfg.FileStoragePath)
 	if err != nil {
 		return nil, err

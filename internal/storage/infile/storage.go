@@ -84,24 +84,24 @@ func (s *Storage) initFromFile() error {
 		return fmt.Errorf("ошибка чтения из хранилища: %w", err)
 	}
 
-	//set URL cache
+	//  set URL cache
 	s.cache.urlCache = data
 
 	if len(data) > 0 {
 		for _, v := range data {
-			//set URL index
+			//  set URL index
 			existShortID, _ := s.shortURLRepo.Exist(v.ShortID)
 			if !existShortID {
 				s.cache.shortURLidx[v.ShortID] = v.ID
 			}
 
-			//set Users cahe
+			//  set Users cahe
 			existUser, _ := s.userRepo.Exist(v.UserID)
 			if v.UserID != uuid.Nil && !existUser {
 				s.cache.userCache[v.UserID] = v.UserID
 			}
 
-			//set srcURL cache
+			//  set srcURL cache
 			existURL, _ := s.shortURLRepo.Exist(v.URL)
 			if !existURL {
 				s.cache.srcURLidx[v.URL] = v.ID

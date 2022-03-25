@@ -53,13 +53,13 @@ func (a *Auth) Middleware(next http.Handler) http.Handler {
 //  authUser reads uuid from cookie token. If ok and user exist set ctx, else generate new user and set cookie
 func (a *Auth) authUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	if cookie, errCookie := r.Cookie("token"); errCookie == nil {
-		//decode token
+		//  decode token
 		id, err := a.crypt.DecodeToken(cookie.Value)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)
 		}
 
-		//check user
+		//  check user
 		exist, err := a.svc.Exist(r.Context(), id)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("ошибка установки ключа пользователя:%w", err)

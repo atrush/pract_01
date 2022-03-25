@@ -66,7 +66,7 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 			r.deleteChan <- schema.ShortURL{ShortID: v, UserID: userID}
 		}
 
-		//run flush on end of list
+		//  run flush on end of list
 		r.flushDeleteChan <- struct{}{}
 	}()
 

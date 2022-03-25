@@ -88,7 +88,7 @@ func ExampleHandler_GetUserUrls() {
 		r.ServeHTTP(w, request)
 	}
 
-	//get user urls list
+	//  get user urls list
 	request := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 	request.AddCookie(cookie)
 	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
