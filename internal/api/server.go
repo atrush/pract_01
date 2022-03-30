@@ -14,10 +14,15 @@ import (
 //  Server implements http server
 type Server struct {
 	httpServer http.Server
+	cfg        *pkg.Config
 }
 
 //  NewServer return new server
 func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
+	if cfg == nil {
+		return nil, errors.New("error server initiation: config is nil")
+	}
+
 	svcSht, err := service.NewShortURLService(db)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
@@ -38,17 +43,22 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 			Addr:    cfg.ServerPort,
 			Handler: NewRouter(handler, cfg.Debug),
 		},
+		cfg: cfg,
 	}, nil
 }
 
 //  Run starts http server
 func (s *Server) Run() error {
-	certPath, keyPath, err := pkg.GetCertX509Files()
-	if err != nil {
-		return fmt.Errorf("error serve ssl:%w", err)
+	if s.cfg.EnableHTTPS {
+		certPath, keyPath, err := pkg.GetCertX509Files()
+		if err != nil {
+			return fmt.Errorf("error serve ssl:%w", err)
+		}
+
+		return s.httpServer.ListenAndServeTLS(certPath, keyPath)
 	}
 
-	return s.httpServer.ListenAndServeTLS(certPath, keyPath)
+	return s.httpServer.ListenAndServe()
 }
 
 //  Shutdown sutdown http server

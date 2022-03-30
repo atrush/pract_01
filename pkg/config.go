@@ -15,6 +15,7 @@ type Config struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH" validate:"-"`
 	DatabaseDSN     string `env:"DATABASE_DSN" validate:"-"`
 	Debug           bool   `env:"SHORTENER_DEBUG" envDefault:"false" validate:"-"`
+	EnableHTTPS     bool   `env:"ENABLE_HTTPS" envDefault:"false" validate:"-"`
 }
 
 //  Default config params.
@@ -24,6 +25,7 @@ const (
 	defFileStorage = ""
 	defDatabaseDSN = ""
 	defDebug       = false
+	defEnableHTTPS = false
 )
 
 //  NewConfig inits new config.
@@ -31,7 +33,9 @@ const (
 func NewConfig() (*Config, error) {
 	cfg := Config{}
 	cfg.readFlagConfig()
-	cfg.readEnvConfig()
+	if err := cfg.readEnvConfig(); err != nil {
+		return nil, err
+	}
 
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("ошибка инициализации конфига: %w", err)
@@ -56,7 +60,7 @@ func (c *Config) readFlagConfig() {
 	flag.StringVar(&c.FileStoragePath, "f", defFileStorage, "путь до файла с сокращёнными URL")
 	flag.StringVar(&c.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
 	flag.BoolVar(&c.Debug, "debug", defDebug, "режим отладки")
-
+	flag.BoolVar(&c.EnableHTTPS, "s", defEnableHTTPS, "включения HTTPS в веб-сервере")
 	flag.Parse()
 }
 
@@ -82,6 +86,9 @@ func (c *Config) readEnvConfig() error {
 	}
 	if envConfig.Debug {
 		c.Debug = envConfig.Debug
+	}
+	if envConfig.EnableHTTPS {
+		c.EnableHTTPS = envConfig.EnableHTTPS
 	}
 	return nil
 }
