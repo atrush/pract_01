@@ -32,6 +32,7 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}
 
+	//http.ListenAndServeTLS или tls.Listen.
 	return &Server{
 		httpServer: http.Server{
 			Addr:    cfg.ServerPort,
@@ -42,7 +43,12 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 
 //  Run starts http server
 func (s *Server) Run() error {
-	return s.httpServer.ListenAndServe()
+	certPath, keyPath, err := pkg.GetCertX509Files()
+	if err != nil {
+		return fmt.Errorf("error serve ssl:%w", err)
+	}
+
+	return s.httpServer.ListenAndServeTLS(certPath, keyPath)
 }
 
 //  Shutdown sutdown http server
