@@ -12,8 +12,8 @@ func main() {
 		qq = 2
 	}
 	fmt.Printf("n%v", qq)
-	os.Exit(0)
+	os.Exit(0) // want "os.Exit call in main.go"
 
 	//exit
-	os.Exit(0)
+	os.Exit(0) // want "os.Exit call in main.go"
 }
