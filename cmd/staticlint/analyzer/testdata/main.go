@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	qq := 9
 	for i := 0; i < 9; i++ {
 		qq = 2
