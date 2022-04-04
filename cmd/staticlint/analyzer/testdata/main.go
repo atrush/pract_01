@@ -11,8 +11,12 @@ func main() {
 	for i := 0; i < 9; i++ {
 		qq = 2
 	}
+
+	if qq == 43 {
+		os.Exit(0) // want "os.Exit call in main.go"
+	}
+
 	fmt.Printf("n%v", qq)
-	os.Exit(0) // want "os.Exit call in main.go"
 
 	//exit
 	os.Exit(0) // want "os.Exit call in main.go"
