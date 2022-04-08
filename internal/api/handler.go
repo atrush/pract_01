@@ -73,7 +73,7 @@ func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
 // Return status 201 and list of pairs [id, short url] in json format, model BatchResponse, if processed.
 func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 
-	//read batch
+	//  read batch
 	var batch []BatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -82,7 +82,7 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	//make map id[url] to add
+	//  make map id[url] to add
 	listToAdd := make(map[string]string, len(batch))
 	for _, batchEl := range batch {
 		listToAdd[batchEl.ID] = batchEl.URL
@@ -90,14 +90,14 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 
 	userID := h.getUserIDFromContext(r)
 
-	//save mp to db, values in map updates to shortURL
+	//  save mp to db, values in map updates to shortURL
 	if err := h.svc.SaveURLList(listToAdd, userID); err != nil {
 		h.serverError(w, err.Error())
 
 		return
 	}
 
-	//serialize response
+	//  serialize response
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "   ")

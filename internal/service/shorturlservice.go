@@ -36,13 +36,13 @@ func (sh *ShortURLService) DeleteURLList(userID uuid.UUID, shotIDList ...string)
 //  SaveURLList saves map[external_id]URL to storage, updates URL to ShortID in map.
 func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) error {
 
-	//map of new shortURL with incoming IDs
+	//  map of new shortURL with incoming IDs
 	toAdd := make(map[string]model.ShortURL, len(src))
 
-	//map for cheking new shortID for unique
+	//  map for cheking new shortID for unique
 	checkShortID := make(map[string]string, len(src))
 
-	//generate new shortURLs and send to save db
+	//  generate new shortURLs and send to save db
 	for k, v := range src {
 
 		sht := model.NewShortURL(v, userID)
@@ -59,12 +59,12 @@ func (sh *ShortURLService) SaveURLList(src map[string]string, userID uuid.UUID) 
 		toAdd[k] = sht
 	}
 
-	//flush buffer
+	//  flush buffer
 	if err := sh.db.URL().SaveURLBuffFlush(); err != nil {
 		return err
 	}
 
-	//update incoming map URLs fo shortIDs
+	//  update incoming map URLs fo shortIDs
 	for k, v := range toAdd {
 		src[k] = v.ShortID
 	}

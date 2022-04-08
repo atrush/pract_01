@@ -108,7 +108,6 @@ func initTestHandler(b *testing.B) (*chi.Mux, *httptest.ResponseRecorder, *http.
 
 	// init db
 	db, err := infile.NewFileStorage("")
-	//db, err := psql.NewTestStorage("postgres://postgres:hjvfirb@192.168.1.15:5432/tst_00?sslmode=disable")
 
 	if err != nil {
 		return nil, nil, nil, err
