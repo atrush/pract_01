@@ -48,25 +48,31 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 }
 
 //  Run starts http server
+//  if config EnableHTTPS true runs in HTTPS mode
 func (s *Server) Run() error {
 	if s.cfg.EnableHTTPS {
 		certPath, keyPath, err := pkg.GetCertX509Files()
 		if err != nil {
 			return fmt.Errorf("error serve ssl:%w", err)
 		}
-
-		return s.httpServer.ListenAndServeTLS(certPath, keyPath)
+		return handleServerCloseErr(s.httpServer.ListenAndServeTLS(certPath, keyPath))
 	}
 
-	return s.httpServer.ListenAndServe()
+	return handleServerCloseErr(s.httpServer.ListenAndServe())
+}
+
+//  returns error if error is not http.ErrServerClosed
+func handleServerCloseErr(err error) error {
+	if err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("HTTP server closed with: %w", err)
+		}
+	}
+
+	return nil
 }
 
 //  Shutdown sutdown http server
 func (s *Server) Shutdown(ctx context.Context) error {
-	//  check server not off
-	if err := s.httpServer.ListenAndServe(); err == http.ErrServerClosed {
-		return errors.New("http server not runned")
-	}
-
 	return s.httpServer.Shutdown(ctx)
 }

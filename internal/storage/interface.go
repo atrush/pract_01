@@ -19,6 +19,9 @@ type Storage interface {
 
 	//  Ping checks connection to storage.
 	Ping() error
+
+	//  WaitAsyncTasksEnded returns true if on shutting down we must wait async tasks ended
+	WaitAsyncTasksEnded() bool
 }
 
 //  URLRepository is the interface that wraps methods for working with url records in database.

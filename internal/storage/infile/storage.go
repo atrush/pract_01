@@ -46,6 +46,11 @@ func NewFileStorage(fileName string) (*Storage, error) {
 	return &st, nil
 }
 
+//  WaitAsyncTasksEnded returns true if on shutting down we must wait async tasks ended
+func (s *Storage) WaitAsyncTasksEnded() bool {
+	return false
+}
+
 //  URL returns urls repository.
 func (s *Storage) URL() storage.URLRepository {
 	if s.shortURLRepo != nil {

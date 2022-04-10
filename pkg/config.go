@@ -65,7 +65,7 @@ func (c *Config) readFlagConfig() {
 	flag.StringVar(&c.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
 	flag.BoolVar(&c.Debug, "debug", defDebug, "режим отладки")
 	flag.BoolVar(&c.EnableHTTPS, "s", defEnableHTTPS, "включения HTTPS в веб-сервере")
-	flag.BoolVar(&c.EnableHTTPS, "c", defEnableHTTPS, "файл конфигурации")
+	flag.StringVar(&c.ConfigPath, "c", "", "файл конфигурации")
 	flag.Parse()
 }
 
