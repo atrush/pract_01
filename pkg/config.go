@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/go-playground/validator/v10"
-	"golang.org/x/exp/slices"
 	"os"
 )
 
@@ -130,7 +129,7 @@ func getConfigPath() string {
 
 	//  tries to get config path from flags
 	args := os.Args
-	flagIndex := slices.Index(args, "-c")
+	flagIndex := indexFirst(args, "-c")
 	if flagIndex > 0 && len(args) >= flagIndex+1 {
 		path = args[flagIndex+1]
 	}
@@ -149,4 +148,13 @@ func readConfigFromFile(path string) (*Config, error) {
 		return nil, fmt.Errorf("error reading config from file: %w", err)
 	}
 	return &c, nil
+}
+
+func indexFirst(list []string, el string) int {
+	for i, vs := range list {
+		if el == vs {
+			return i
+		}
+	}
+	return -1
 }

@@ -1,6 +1,6 @@
 module github.com/atrush/pract_01.git
 
-go 1.18
+go 1.17
 
 require (
 	github.com/caarlos0/env/v6 v6.9.1
@@ -35,7 +35,6 @@ require (
 	github.com/quasilyte/gogrep v0.0.0-20220320172536-d3b98902346e // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
