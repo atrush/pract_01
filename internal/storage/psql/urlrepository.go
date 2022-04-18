@@ -48,7 +48,7 @@ func newShortURLRepository(ctx context.Context, db *sql.DB, asyncEnded chan stru
 		insertBuffer: URLBuffer{
 			buf: make([]model.ShortURL, 0, 100),
 		},
-		deleteChan:      make(chan schema.ShortURL, delBuffBatch),
+		deleteChan:      make(chan schema.ShortURL),
 		flushDeleteChan: make(chan struct{}),
 		asyncEnded:      asyncEnded,
 	}
