@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/go-playground/validator/v10"
+	"log"
 	"os"
 )
 
@@ -35,7 +36,12 @@ const (
 //  Reads flag params over default params, then redefines  with environment params.
 func NewConfig() (*Config, error) {
 	cfg := Config{}
-	cfg.tryReadFileConfig()
+
+	configPath := getConfigPath()
+	if len(configPath) != 0 {
+		cfg.readFileConfig(configPath)
+	}
+
 	cfg.readFlagConfig()
 	if err := cfg.readEnvConfig(); err != nil {
 		return nil, err
@@ -105,20 +111,17 @@ func (c *Config) readEnvConfig() error {
 	return nil
 }
 
-//  tryReadFromFile if exist flag -c or env CONFIG tries to read config from path.
-//  If read ok, overrides config with new config
-func (c *Config) tryReadFileConfig() {
-	path := getConfigPath()
-	if len(path) == 0 {
-		return
-	}
-
-	fileConfig, err := readConfigFromFile(path)
-	if err != nil {
-		return
-	}
+func (c *Config) readFileConfig(path string) {
+	fileConfig := Must(parseFromFile(path))
 
 	c.redefineConfig(fileConfig)
+}
+
+func Must(c *Config, err error) *Config {
+	if err != nil {
+		log.Fatal(err)
+	}
+	return c
 }
 
 func getConfigPath() string {
@@ -136,8 +139,8 @@ func getConfigPath() string {
 	return path
 }
 
-func readConfigFromFile(path string) (*Config, error) {
-	file, err := os.OpenFile(path, os.O_RDONLY, 0777)
+func parseFromFile(path string) (*Config, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: %w", err)
 	}

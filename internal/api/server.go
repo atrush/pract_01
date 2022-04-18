@@ -63,10 +63,8 @@ func (s *Server) Run() error {
 
 //  returns error if error is not http.ErrServerClosed
 func handleServerCloseErr(err error) error {
-	if err != nil {
-		if !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("HTTP server closed with: %w", err)
-		}
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("HTTP server closed with: %w", err)
 	}
 
 	return nil
