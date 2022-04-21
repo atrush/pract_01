@@ -26,6 +26,9 @@ type URLShortener interface {
 
 	//  Ping checks db connection.
 	Ping(ctx context.Context) error
+
+	//  GetCount returns count of stored, not deleted urls.
+	GetCount() (int, error)
 }
 
 // UserManager is the interface that wraps methods for process users.
@@ -35,4 +38,7 @@ type UserManager interface {
 
 	//  Exist checks user is exist, by user id.
 	Exist(ctx context.Context, id uuid.UUID) (bool, error)
+
+	//  GetCount returns count of stored users.
+	GetCount() (int, error)
 }

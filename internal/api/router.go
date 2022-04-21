@@ -38,6 +38,8 @@ func NewRouter(handler *Handler, debug bool) *chi.Mux {
 		r.Delete("/api/user/urls", handler.DeleteBatch)
 	})
 
+	r.Get("/api/internal/stats", handler.Stats)
+
 	r.Get("/ping", handler.Ping)
 	r.Get("/api/user/urls", handler.GetUserUrls)
 	r.Get("/{shortID}", handler.GetURLHandler)

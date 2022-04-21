@@ -198,6 +198,20 @@ func (r *shortURLRepository) ExistSrcURL(url string) (bool, error) {
 	return ok, nil
 }
 
+//  GetCount returns count of stored, not deleted urls.
+func (r *shortURLRepository) GetCount() (int, error) {
+	r.cache.RLock()
+	defer r.cache.RUnlock()
+
+	count := 0
+	for _, v := range r.cache.urlCache {
+		if !v.IsDeleted {
+			count++
+		}
+	}
+	return count, nil
+}
+
 //  userExist checks that user is exist in storage.
 func (r *shortURLRepository) userExist(userID uuid.UUID) bool {
 	r.cache.RLock()

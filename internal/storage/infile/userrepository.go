@@ -49,3 +49,10 @@ func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 
 	return ok, nil
 }
+
+//  GetCount returns count of stored users.
+func (r *userRepository) GetCount() (int, error) {
+	r.cache.RLock()
+	defer r.cache.RUnlock()
+	return len(r.cache.userCache), nil
+}

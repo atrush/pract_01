@@ -36,6 +36,11 @@ func (u *UserService) Exist(ctx context.Context, id uuid.UUID) (bool, error) {
 	return u.db.User().Exist(id)
 }
 
+//  GetCount returns count of stored users.
+func (u *UserService) GetCount() (int, error) {
+	return u.db.User().GetCount()
+}
+
 //  AddUser creates new user, save to storage and return instance.
 func (u *UserService) AddUser(ctx context.Context) (model.User, error) {
 	newUser := model.NewUser()

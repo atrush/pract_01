@@ -115,6 +115,11 @@ func (sh *ShortURLService) Ping(ctx context.Context) error {
 	return sh.db.Ping()
 }
 
+//  GetCount returns count of stored, not deleted urls.
+func (sh *ShortURLService) GetCount() (int, error) {
+	return sh.db.URL().GetCount()
+}
+
 //  genShortURL generate unique ShortID, for generating multiple shortIDs use generatedCheck.
 func (sh *ShortURLService) genShortURL(srcURL string, id uuid.UUID, generatedCheck map[string]string) (string, error) {
 	shortID, err := sh.iterShortURLGenerator(string(srcURL), 0, id.String(), generatedCheck)

@@ -46,6 +46,9 @@ type URLRepository interface {
 
 	//  DeleteURLBatch async updates list of urls as deleted.
 	DeleteURLBatch(userID uuid.UUID, shortIDList ...string) error
+
+	//  GetCount returns count of stored, not deleted urls.
+	GetCount() (int, error)
 }
 
 //  UserRepository is the interface that wraps methods for working with url records in database.
@@ -55,4 +58,7 @@ type UserRepository interface {
 
 	//  Exist checks than record with id is exist in storage.
 	Exist(userID uuid.UUID) (bool, error)
+
+	//  GetCount returns count of stored users.
+	GetCount() (int, error)
 }

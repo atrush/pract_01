@@ -29,6 +29,36 @@ func NewHandler(shtSvc service.URLShortener, authSvc service.UserManager, baseUR
 	}, nil
 }
 
+//  Stats stats of stored users and not deleted urls.
+//  Return status 200 and stats respone.
+//  Return status 403 if екгыеув subnet not given, or request subnet not trusted.
+func (h *Handler) Stats(w http.ResponseWriter, r *http.Request) {
+	urls, err := h.svc.GetCount()
+	if err != nil {
+		h.serverError(w, err.Error())
+	}
+
+	users, err := h.auth.Svc.GetCount()
+	if err != nil {
+		h.serverError(w, err.Error())
+	}
+
+	resp := StatsResponse{
+		Urls:  urls,
+		Users: users,
+	}
+
+	jsResult, err := json.Marshal(resp)
+	if err != nil {
+		h.serverError(w, err.Error())
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(jsResult))
+}
+
 //  Ping handler check db connection.
 //  Return status 200 if db is active.
 //  Return status 500 if db not active.
