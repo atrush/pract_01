@@ -18,14 +18,16 @@ type Handler struct {
 	auth    Auth
 	svc     service.URLShortener
 	baseURL string
+	subnet  *Subnet
 }
 
 //  NewHandler init new handler object and return pointer.
-func NewHandler(shtSvc service.URLShortener, authSvc service.UserManager, baseURL string) (*Handler, error) {
+func NewHandler(shtSvc service.URLShortener, authSvc service.UserManager, baseURL string, network string) (*Handler, error) {
 	return &Handler{
 		svc:     shtSvc,
 		baseURL: baseURL,
 		auth:    NewAuth(authSvc),
+		subnet:  NewSubnet(network),
 	}, nil
 }
 

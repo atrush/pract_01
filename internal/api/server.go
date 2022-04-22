@@ -32,7 +32,7 @@ func NewServer(cfg *pkg.Config, db storage.Storage) (*Server, error) {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}
 
-	handler, err := NewHandler(svcSht, svcUser, cfg.BaseURL)
+	handler, err := NewHandler(svcSht, svcUser, cfg.BaseURL, cfg.TrustedSubnet)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка инициализации handler:%w", err)
 	}

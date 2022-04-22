@@ -3,5 +3,6 @@
   "base_url": "http://127.0.0.1:8082",
   "file_storage_path": "tmp3.txt",
   "database_dsn": "",
-  "enable_https": false
+  "enable_https": false,
+  "trusted_subnet": "127.0.0.1/24"
 }
