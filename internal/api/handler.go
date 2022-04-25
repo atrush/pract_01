@@ -123,7 +123,8 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 	userID := h.getUserIDFromContext(r)
 
 	//  save mp to db, values in map updates to shortURL
-	if err := h.svc.SaveURLList(listToAdd, userID); err != nil {
+	savedUrls, err := h.svc.SaveURLList(listToAdd, userID)
+	if err != nil {
 		h.serverError(w, err.Error())
 
 		return
@@ -133,7 +134,7 @@ func (h *Handler) SaveBatch(w http.ResponseWriter, r *http.Request) {
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "   ")
-	if err := encoder.Encode(NewBatchListResponseFromMap(listToAdd, h.baseURL)); err != nil {
+	if err := encoder.Encode(NewBatchListResponseFromMap(savedUrls, h.baseURL)); err != nil {
 		h.serverError(w, err.Error())
 
 		return

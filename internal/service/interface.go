@@ -18,8 +18,7 @@ type URLShortener interface {
 	SaveURL(ctx context.Context, srcURL string, userID uuid.UUID) (string, error)
 
 	//  SaveURLList saves list of urls for user.
-	//  Accept map of [ext_id]url, save and replace url by shortID.
-	SaveURLList(srcArr map[string]string, userID uuid.UUID) error
+	SaveURLList(srcArr map[string]string, userID uuid.UUID) (map[string]string, error)
 
 	//  DeleteURLList marks list of short urls as deleted.
 	DeleteURLList(userID uuid.UUID, shortIDList ...string) error
