@@ -34,7 +34,7 @@ func TestURLsServer_SaveList(t *testing.T) {
 			name:        "empty list",
 			svc:         mockNoRun(ctrl),
 			request:     &pb.SaveListRequest{UserId: userID.String()},
-			reqResponse: &pb.SaveListResponse{Error: ErrorUrlListIsEmpty.Error()},
+			reqResponse: &pb.SaveListResponse{Error: ErrorURLListIsEmpty.Error()},
 		},
 		{
 			name: "save ok",

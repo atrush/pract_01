@@ -31,7 +31,7 @@ func TestURLsServer_DeleteList(t *testing.T) {
 			name:        "empty list",
 			svc:         mockNoRun(ctrl),
 			request:     &pb.DelListRequest{UserId: userID.String()},
-			reqResponse: &pb.DelListResponse{Error: ErrorUrlListIsEmpty.Error()},
+			reqResponse: &pb.DelListResponse{Error: ErrorURLListIsEmpty.Error()},
 		},
 		{
 			name:        "delete ok",
