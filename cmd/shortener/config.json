@@ -1,0 +1,7 @@
+{
+  "server_address": ":8082",
+  "base_url": "http://127.0.0.1:8082",
+  "file_storage_path": "tmp3.txt",
+  "database_dsn": "",
+  "enable_https": false
+}

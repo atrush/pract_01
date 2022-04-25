@@ -30,7 +30,10 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	db, err := getDB(*cfg)
+	ctx, cancel := context.WithCancel(context.Background())
+	finishedChan := make(chan struct{})
+
+	db, err := getDB(ctx, finishedChan, *cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -41,23 +44,38 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	log.Fatal(server.Run())
+	go func() {
+		if err := server.Run(); err != nil {
+			log.Fatal(err.Error())
+		}
+	}()
 
+	// graceful shutdown
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, os.Interrupt)
 	<-sigc
+	log.Println("accepted sigint, shutting down")
 
-	if err := server.Shutdown(context.Background()); err != nil {
+	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("error shutdown server: %s\n", err.Error())
+	}
+
+	// waiting if db must wait ending of async tasks
+	if db.WaitAsyncTasksEnded() {
+		log.Println("waiting all tasks finish")
+		cancel()
+		<-finishedChan
+		log.Println("all tasks finished")
 	}
 }
 
 //  getDB returns initialized storage
 //  psql storage if dsn not empty, else memory storage
-func getDB(cfg pkg.Config) (storage.Storage, error) {
+func getDB(ctx context.Context, finishedChan chan struct{}, cfg pkg.Config) (storage.Storage, error) {
+	log.Println("dsn: " + cfg.DatabaseDSN)
 	//  postgress storage
 	if cfg.DatabaseDSN != "" {
-		db, err := psql.NewStorage(cfg.DatabaseDSN)
+		db, err := psql.NewStorage(ctx, finishedChan, cfg.DatabaseDSN)
 		if err != nil {
 			return nil, err
 		}

@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/lib/pq"
 	"log"
 	"sync"
-
-	"github.com/lib/pq"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
@@ -27,6 +26,8 @@ type shortURLRepository struct {
 	insertBuffer    URLBuffer
 	deleteChan      chan schema.ShortURL
 	flushDeleteChan chan struct{}
+	asyncEnded      chan struct{}
+	wg              *sync.WaitGroup
 }
 
 //  URLBuffer is buffeer for batch inserting.
@@ -40,18 +41,29 @@ const (
 )
 
 //  newShortURLRepository inits new url repository.
-func newShortURLRepository(db *sql.DB) *shortURLRepository {
+func newShortURLRepository(ctx context.Context, db *sql.DB, asyncEnded chan struct{}) *shortURLRepository {
 	repo := shortURLRepository{
 		db: db,
+		wg: &sync.WaitGroup{},
 		insertBuffer: URLBuffer{
 			buf: make([]model.ShortURL, 0, 100),
 		},
-		deleteChan:      make(chan schema.ShortURL, delBuffBatch),
+		deleteChan:      make(chan schema.ShortURL),
 		flushDeleteChan: make(chan struct{}),
+		asyncEnded:      asyncEnded,
 	}
+	repo.waitAsync(ctx)
 	repo.initDeleteBatchWorker()
 
 	return &repo
+}
+
+func (r *shortURLRepository) waitAsync(ctx context.Context) {
+	go func() {
+		<-ctx.Done()
+		r.wg.Wait()
+		close(r.deleteChan)
+	}()
 }
 
 //  DeleteURLBatch runs goroutine that adds list of urls to delete buffer.
@@ -60,8 +72,10 @@ func (r *shortURLRepository) DeleteURLBatch(userID uuid.UUID, shortIDList ...str
 	if len(shortIDList) == 0 {
 		return nil
 	}
-
+	r.wg.Add(1)
 	go func() {
+		defer r.wg.Done()
+
 		for _, v := range shortIDList {
 			r.deleteChan <- schema.ShortURL{ShortID: v, UserID: userID}
 		}
@@ -81,7 +95,13 @@ func (r *shortURLRepository) initDeleteBatchWorker() {
 		for {
 			select {
 			// read URL to delete from deleteChan
-			case v := <-r.deleteChan:
+			case v, ok := <-r.deleteChan:
+				if !ok { // if chanel closed, write buff and send to asyncEnded
+					if len(cache) == 0 {
+						r.asyncEnded <- struct{}{}
+						return
+					}
+				}
 				cache = append(cache, v)
 				if len(cache) < cap(cache) {
 					continue
@@ -92,11 +112,11 @@ func (r *shortURLRepository) initDeleteBatchWorker() {
 					continue
 				}
 			}
-
 			if err := r.deleteTxURLBatch(cache); err != nil {
 				log.Fatalf("ошибка транзакции удаления очереди URL:%v", err.Error())
 			}
 			cache = make([]schema.ShortURL, 0, delBuffBatch)
+
 		}
 	}()
 }
