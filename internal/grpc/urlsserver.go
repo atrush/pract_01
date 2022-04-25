@@ -111,7 +111,7 @@ func (u *URLsServer) SaveList(ctx context.Context, request *pb.SaveListRequest) 
 	}
 
 	if len(request.List) == 0 {
-		response.Error = ErrorUrlListIsEmpty.Error()
+		response.Error = ErrorURLListIsEmpty.Error()
 		return &response, nil
 	}
 
@@ -148,7 +148,7 @@ func (u *URLsServer) DelList(ctx context.Context, request *pb.DelListRequest) (*
 	}
 
 	if len(request.List) == 0 {
-		response.Error = ErrorUrlListIsEmpty.Error()
+		response.Error = ErrorURLListIsEmpty.Error()
 		return &response, nil
 	}
 
