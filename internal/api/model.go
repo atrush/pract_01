@@ -41,8 +41,8 @@ type (
 
 	//  StatsResponse response stats of stored users and not deleted urls.
 	StatsResponse struct {
-		Urls  int `urls`
-		Users int `users`
+		Urls  int `json:"urls"`
+		Users int `json:"users"`
 	}
 )
 
