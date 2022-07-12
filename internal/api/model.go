@@ -38,6 +38,12 @@ type (
 
 	//  BatchDeleteRequest request array of urls to delete.
 	BatchDeleteRequest []string
+
+	//  StatsResponse response stats of stored users and not deleted urls.
+	StatsResponse struct {
+		Urls  int `json:"urls"`
+		Users int `json:"users"`
+	}
 )
 
 func (s *ShortenRequest) Validate() error {

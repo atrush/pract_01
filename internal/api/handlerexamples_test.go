@@ -130,7 +130,7 @@ func initExampleHandler() (*Handler, error) {
 		return nil, err
 	}
 
-	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080")
+	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080", "")
 	if err != nil {
 		return nil, err
 	}

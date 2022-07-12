@@ -48,3 +48,14 @@ func (r *userRepository) Exist(userID uuid.UUID) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+//  GetCount returns count of stored users.
+func (r *userRepository) GetCount() (int, error) {
+	count := 0
+	err := r.db.QueryRow(
+		"SELECT  COUNT(*) as count FROM users").Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

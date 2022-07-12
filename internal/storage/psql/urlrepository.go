@@ -284,6 +284,17 @@ func (r *shortURLRepository) GetUserURLList(ctx context.Context, userID uuid.UUI
 	return userURLs.ToCanonical()
 }
 
+//  GetCount returns count of stored, not deleted urls.
+func (r *shortURLRepository) GetCount() (int, error) {
+	count := 0
+	err := r.db.QueryRow(
+		"SELECT  COUNT(*) as count FROM urls WHERE isdeleted = $1", false).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 //  Exist checks that shortID exist in database.
 func (r *shortURLRepository) Exist(shortID string) (bool, error) {
 	count := 0

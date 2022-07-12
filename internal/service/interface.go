@@ -18,14 +18,16 @@ type URLShortener interface {
 	SaveURL(ctx context.Context, srcURL string, userID uuid.UUID) (string, error)
 
 	//  SaveURLList saves list of urls for user.
-	//  Accept map of [ext_id]url, save and replace url by shortID.
-	SaveURLList(srcArr map[string]string, userID uuid.UUID) error
+	SaveURLList(srcArr map[string]string, userID uuid.UUID) (map[string]string, error)
 
 	//  DeleteURLList marks list of short urls as deleted.
 	DeleteURLList(userID uuid.UUID, shortIDList ...string) error
 
 	//  Ping checks db connection.
 	Ping(ctx context.Context) error
+
+	//  GetCount returns count of stored, not deleted urls.
+	GetCount() (int, error)
 }
 
 // UserManager is the interface that wraps methods for process users.
@@ -35,4 +37,7 @@ type UserManager interface {
 
 	//  Exist checks user is exist, by user id.
 	Exist(ctx context.Context, id uuid.UUID) (bool, error)
+
+	//  GetCount returns count of stored users.
+	GetCount() (int, error)
 }

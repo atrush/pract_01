@@ -18,8 +18,9 @@ type Config struct {
 	DatabaseDSN     string `env:"DATABASE_DSN" json:"database_dsn"  validate:"-"`
 	EnableHTTPS     bool   `env:"ENABLE_HTTPS" json:"enable_https" envDefault:"false" validate:"-"`
 
-	Debug      bool   `env:"SHORTENER_DEBUG" json:"-" envDefault:"false" validate:"-"`
-	ConfigPath string `env:"CONFIG" json:"-" validate:"-"`
+	Debug         bool   `env:"SHORTENER_DEBUG" json:"-" envDefault:"false" validate:"-"`
+	ConfigPath    string `env:"CONFIG" json:"-" validate:"-"`
+	TrustedSubnet string `env:"TRUSTED_SUBNET" json:"trusted_subnet" validate:"-"`
 }
 
 //  Default config params.
@@ -65,14 +66,18 @@ func (c *Config) Validate() error {
 
 //  readFlagConfig reads flag params over default params.
 func (c *Config) readFlagConfig() {
-	flag.StringVar(&c.ServerPort, "a", defServerPort, "порт HTTP-сервера <:port>")
-	flag.StringVar(&c.BaseURL, "b", defBaseURL, "базовый URL для сокращенных ссылок <http://localhost:port>")
-	flag.StringVar(&c.FileStoragePath, "f", defFileStorage, "путь до файла с сокращёнными URL")
-	flag.StringVar(&c.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
-	flag.BoolVar(&c.Debug, "debug", defDebug, "режим отладки")
-	flag.BoolVar(&c.EnableHTTPS, "s", defEnableHTTPS, "включения HTTPS в веб-сервере")
-	flag.StringVar(&c.ConfigPath, "c", "", "файл конфигурации")
+	flagConfig := &Config{}
+	flag.StringVar(&flagConfig.ServerPort, "a", defServerPort, "порт HTTP-сервера <:port>")
+	flag.StringVar(&flagConfig.BaseURL, "b", defBaseURL, "базовый URL для сокращенных ссылок <http://localhost:port>")
+	flag.StringVar(&flagConfig.FileStoragePath, "f", defFileStorage, "путь до файла с сокращёнными URL")
+	flag.StringVar(&flagConfig.DatabaseDSN, "d", defDatabaseDSN, "строка с адресом подключения к БД")
+	flag.BoolVar(&flagConfig.Debug, "debug", defDebug, "режим отладки")
+	flag.BoolVar(&flagConfig.EnableHTTPS, "s", defEnableHTTPS, "включения HTTPS в веб-сервере")
+	flag.StringVar(&flagConfig.ConfigPath, "c", "", "файл конфигурации")
+	flag.StringVar(&flagConfig.TrustedSubnet, "t", "", "CIDR доверенной подсети")
 	flag.Parse()
+
+	c.redefineConfig(flagConfig)
 }
 
 //  redefineConfig redefines config with new config.
@@ -90,6 +95,9 @@ func (c *Config) redefineConfig(nc *Config) {
 	}
 	if nc.DatabaseDSN != "" {
 		c.DatabaseDSN = nc.DatabaseDSN
+	}
+	if nc.TrustedSubnet != "" {
+		c.TrustedSubnet = nc.TrustedSubnet
 	}
 	if nc.Debug {
 		c.Debug = nc.Debug

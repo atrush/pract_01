@@ -218,17 +218,25 @@ func (g *GoSaveBatch) CheckDeleted() error {
 }
 
 func TestHandler_BatchDelete(t *testing.T) {
+	//ch := make(chan struct{})
+	//tstSt, err := psql.NewStorage(context.Background(), ch, "postgres://postgres:hjvfirb@192.168.1.15:5432/tst_00?sslmode=disable")
+	//require.NoError(t, err)
+	//
+	//defer func() {
+	//	tstSt.Close()
+	//}()
+
 	tstSt, err := infile.NewFileStorage("")
 	require.NoError(t, err)
 
 	h := initHandler(t, tstSt)
 
 	g := &errgroup.Group{}
-	workersCount := 1
+	workersCount := 5
 
 	for j := 0; j < workersCount; j++ {
 		g.Go(func() error {
-			saveBatchItem := GoSaveBatch{r: NewRouter(h, false), count: 11}
+			saveBatchItem := GoSaveBatch{r: NewRouter(h, false), count: 15}
 			if err := saveBatchItem.SaveBatch(); err != nil {
 				return err
 			}
@@ -495,7 +503,7 @@ func initHandler(t *testing.T, tstSt st.Storage) *Handler {
 	svcUser, err := service.NewUserService(tstSt)
 	require.NoError(t, err)
 
-	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080")
+	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080", "")
 	require.NoError(t, err)
 
 	return h

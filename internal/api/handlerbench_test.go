@@ -126,7 +126,7 @@ func initTestHandler(b *testing.B) (*chi.Mux, *httptest.ResponseRecorder, *http.
 	}
 
 	// init handler
-	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080")
+	h, err := NewHandler(svcSht, svcUser, "http://localhost:8080", "")
 	if err != nil {
 		return nil, nil, nil, err
 	}
